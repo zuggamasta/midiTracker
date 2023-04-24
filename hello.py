@@ -1,70 +1,107 @@
+# utilities
+import time
+import random
+
+# UI libs
 import curses
 from curses import wrapper
 
-import time
-
+# midi IO libs
 import rtmidi
+import mido
+from mido import Message
 
-midiout = rtmidi.MidiOut()
-available_ports = midiout.get_ports()
+# configure midiport
+# TODO: Set up port selection / device selection for the user 
+outport = mido.open_output()
 
-if available_ports:
-    midiout.open_port(0)
-else:
-    midiout.open_virtual_port("My virtual output")
+# basic on of messages for sending midi on and midi off
+msg = Message.from_bytes([0x90, 0x40, 0x60])
+msg_off = Message.from_bytes([0x80, 0x40, 0x60])
 
+is_song_playing = True
+current_song_no = 0x00
+current_song_name = "Very first LmidiJ Song"
+current_chain_no = 0x00
+current_pattern_no = 0x00
+bpm = random.randint(90, 160)	
 
+# magic numbers these need to be removed
+char_offset_channel = 3
+char_offset_y = 3
+
+# first idea for the data grid
+current_song_data = [
+    [0x24,"ff","99", "A3", "00", "00"],
+    [0x20,"ff","99", "A3", "00", "00"],    
+    [0x34,"ff","99", "A3", "00", "00"],
+    [0x32,"ff","--", "A3", "00", "00"],
+    [0x42,"--","--", "A3", "00", "00"],
+    [0x40,"--","--", "A3", "00", "00"],
+    [0x42,"--","--", "A3", "00", "00"],
+    [0x40,"--","99", "A3", "00", "00"],
+    [0x26,"--","99", "A3", "00", "00"]
+    ]
+
+current_chain_data = [
+    [0x24,"ff"],
+    [0x20,"ff"],    
+    [0x34,"ff"],
+    [0x32,"ff"],
+    [0x42,"--"],
+    [0x40,"--"],
+    [0x42,"--"],
+    [0x40,"--"],
+    [0x26,"--"]
+    ]
+
+current_pattern_data = [
+    [0x24,"ff"],
+    [0x20,"ff"],    
+    [0x34,"ff"],
+    [0x32,"ff"],
+    [0x42,"--"],
+    [0x40,"--"],
+    [0x42,"--"],
+    [0x40,"--"],
+    [0x26,"--"]
+    ]
+    
+current_song_data.extend(current_song_data)
 
 def main(stdscr):
-    bpm = 120
 
-    cursor = [3,3]
+    while(is_song_playing):
 
-    stdscr.move(cursor[0],cursor[1])
-
-    offset_x = 3
-    offset_y = 3
-
-    data = [
-        ["0C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["1C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["0C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["1C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["0C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["1C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["0C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["1C","ff","99", "A3", "00", "00", "mod", "00"],
-        ["0C","ff","99", "A3", "00", "00", "mod", "00"]]
-    
-    data.extend(data)
-
-    while(True):
-
-        for i in range(0,64):
+        for current_frame in range(0,256):
             stdscr.erase()
-            
-            stdscr.addstr(f"BPM: {bpm}")
-            stdscr.addstr(2,3,"NoteLengNoteLengNoteLengMod Prm",curses.A_BOLD | curses.A_REVERSE)
 
-            for x in range(0,8):
-                for y in range(0,16):
-                    stdscr.addstr(y+offset_y, x*4+offset_x, data[y][x])
+            frame_win = curses.newwin(17,2,3,0)
+
+            for frame in range(16):
+                frame_win.addstr(frame, 0, f"{frame:02}",curses.A_BOLD | curses.A_REVERSE)
+
+            stdscr.addstr(f"BPM: {bpm}  |  Frame:{current_frame}")
+            stdscr.addstr(2,2," Ch0 Ch1 Ch2 Ch3 Ch4 Ch5 ",curses.A_BOLD | curses.A_REVERSE)
+
+            for channel in range(0,6):
+                for row in range(0,16):
+                    stdscr.addstr(row+char_offset_y, channel*4+char_offset_channel, f"{current_song_data[row][channel]:02}")
                     
-                    if(i%16 == y):  
-                        if(0 == x):
-                            stdscr.addstr(y+offset_y, x*3+offset_x, data[y][x], curses.A_REVERSE)
+                    if(current_frame%16 == row):  
+                        if(0 == channel):
+                            note = current_song_data[row][0]
+                        
+                            stdscr.addstr(row+char_offset_y, channel*3+char_offset_channel, f"{current_song_data[row][channel]:02}", curses.A_REVERSE)
+                            msg = Message.from_bytes([0x94, note, 0x60])
+                            msg_off = Message.from_bytes([0x84, note, 0x60])
+                            outport.send(msg)
 
             stdscr.refresh()
+            frame_win.refresh()
 
-            with midiout:
-                note_on = [0x90, 60, 112] # channel 1, middle C, velocity 112
-                note_off = [0x80, 60, 0]
-                midiout.send_message(note_on)
-                time.sleep(0.3)
-                midiout.send_message(note_off)
-                time.sleep(0.1)
-
-            time.sleep(60/bpm/8)
+            time.sleep(60/bpm/4)
+            outport.send(msg_off)
 
     stdscr.getch()
 
