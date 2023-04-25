@@ -11,6 +11,8 @@ import rtmidi
 import mido
 from mido import Message
 
+
+
 # configure midiport
 # Set up port selection / device selection for the user 
 outport = mido.open_output()
@@ -82,8 +84,6 @@ current_pattern_data = [
     ]
     
 current_song_data.extend(current_song_data)
-
-
 
 def main(stdscr):
 
