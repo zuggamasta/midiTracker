@@ -1,5 +1,25 @@
-# midiTracker
+# aMidiTracker
 
-## This could be a nice Midi Tracker in the style of LSDJ and similar Tools.
+Is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
 
-This small musical tool is being written in python. Using curses as interface to run on tiny RaspberryPi. For Midi Communications the rtmidi module is used.
+I am developing this tool for myself, but please let me know if it is useful for you, too. 
+
+## Prerequisites
+
+Tested with python 3.9.10. You'll need a python environment with mido, rtmidi and curses modules available.
+
+## Documentation
+
+aMidiTracker currently uses the first available MidiPort, this will change at one point.
+
+Arrange your composition in song view, filling the channels with phrase chains.
+
+Each chain can have a variable amount of phrases. (As of now only 1 phrase long chains work correct)
+
+Phrases always consist of 16 steps, to each of these steps a musical note can be assigned. At this point in time notes are entered as numbers, with note 60 representing the middle C3.
+
+process can only be killed with ctrl + C, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
+
+# This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
+
+
