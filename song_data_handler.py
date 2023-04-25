@@ -10,6 +10,7 @@ global current_bar
 current_bar = 0
 is_song_playing = True
 
+bpm = 156
 
 # configure midiport
 # Set up port selection / device selection for the user 
@@ -39,44 +40,56 @@ song_data = [['--' for _ in range(16)] for _ in range(6)]
 # for testing purposes
 # add chains to chains to song for testing    
 song_data[0][0] = "00"
-#song_data[0][1] = "00"
+song_data[0][1] = "00"
 song_data[0][2] = "00"
+song_data[0][3] = "00"
+
+song_data[2][0] = "01"
+song_data[2][1] = "02"
 song_data[2][2] = "01"
-#song_data[0][3] = "02"
-#song_data[3][0] = "00"
-song_data[3][1] = "00"
-#song_data[3][2] = "00"
-song_data[3][3] = "01"
+song_data[2][3] = "01"
+
+song_data[3][0] = "03"
+song_data[3][1] = "03"
+song_data[3][2] = "03"
+song_data[4][3] = "03"
 
 
-
-song_data[1][3] = "01"
-song_data[2][7] = "00"
-song_data[3][11] = "01"
-song_data[4][15] = "01"
 
 
 # Generates chain data, there can be a variing amount of chains in a project
 all_chain_data = []
 
 # Example chain data
-chain_data0 =  ['00','02','--','--','--','--','--','--','--','--','--','--','--','--','--','--']     # PHRASES
+chain_data0 =  ['00','--','--','--','--','--','--','--','--','--','--','--','--','--','--','--']     # PHRASES
       #       ['--','--','--','--','--','--','--','--','--','--','--','--','--','--','--','--']]    # TRANSPOSE ( TODO, ignore all transposes that do not have a phrase assigneds )
 
-chain_data1 =  ['01','01','01','02','01','02','01','--','--','--','--','--','--','--','--','--']      # PHRASES
+chain_data1 =  ['01','--','--','--','--','--','--','--','--','--','--','--','--','--','--','--']      # PHRASES
+chain_data2 =  ['02','--','--','--','--','--','--','--','--','--','--','--','--','--','--','--']      # PHRASES
+chain_data3 =  ['03','--','--','--','--','--','--','--','--','--','--','--','--','--','--','--']      # PHRASES
+
+
 
 # Append chains to chain data
 all_chain_data.append(chain_data0)
 all_chain_data.append(chain_data1)
+all_chain_data.append(chain_data2)
+all_chain_data.append(chain_data3)
 
-phrase_data0 =  ['60','--','--','--','60','--','--','--','60','--','--','--','60','--','--','--'] 
-phrase_data1 =  ['90','--','90','--','60','--','90','--','--','--','60','61','63','--','--','--'] 
-phrase_data2 =  ['--','70','--','70','--','70','--','70','--','--','70','--','70','--','70','--'] 
+
+
+phrase_data0 =  ['60','--','--','--','--','--','--','--','60','--','--','--','--','--','--','--'] 
+phrase_data1 =  ['--','--','--','--','90','--','--','--','--','--','--','--','90','--','--','--'] 
+phrase_data2 =  ['--','--','--','99','90','--','--','90','--','--','--','--','90','--','91','92'] 
+phrase_data3 =  ['--','--','28','--','--','--','28','--','--','--','28','--','--','--','28','00'] 
+
 
 all_phrase_data = []
 all_phrase_data.append(phrase_data0)
 all_phrase_data.append(phrase_data1)
 all_phrase_data.append(phrase_data2)
+all_phrase_data.append(phrase_data3)
+
 
 
 #################################
@@ -175,7 +188,7 @@ while(is_song_playing):
                 outport.send(Message('note_off', channel=channel, note=note, velocity=120))
                 sys.stdout.flush()
 
-    time.sleep(60/120/4/2) 
+    time.sleep(60/bpm/4/2) 
         
     for channel in range(max_channels_amount):
         if song_data[channel][current_bar] != "--":
@@ -188,11 +201,11 @@ while(is_song_playing):
                 outport.send(Message('note_off', channel=channel, note=note, velocity=120))
                 sys.stdout.flush()
     step +=1
-    if(step >= 15):
+    if(step >= 16):
         step = 0
         current_bar += 1
 
         sys.stdout.write("\n")
         sys.stdout.flush()
-        if current_bar >= max_song_length:
+        if current_bar >= 4: # max_song_length
             current_bar = 0
