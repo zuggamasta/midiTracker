@@ -1,4 +1,15 @@
-# aMidiTracker
+```
+
+        ___ ___ __    __ __ _______                 __               
+ .---.-|   V   |__.--|  |__|       .----.---.-.----|  |--.-----.----.
+ |  _  |.      |  |  _  |  |.|   | |   _|  _  |  __|    <|  -__|   _|
+ |___._|. \_/  |__|_____|__`-|.  |-|__| |___._|____|__|__|_____|__|  
+       |:  |   |             |:  |                                   
+       |::.|:. |             |::.|                                   
+       `--- ---'             `---'                                   
+                                                                     
+```                                 
+
 
 Is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
 
@@ -22,4 +33,7 @@ process can only be killed with ctrl + C, if there is still a "note_off" message
 
 # This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
 
-
+### python modules used:
+- MIDO for easy midi objects - https://github.com/mido/mido
+- rtmidi for python - https://github.com/superquadratic/rtmidi-python
+- curses for Terminal UI - 
