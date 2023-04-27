@@ -1,14 +1,23 @@
+# utilities
 import sys
 import time
 
+# midi libs
 import mido
 from mido import Message
 
-max_channels_amount = 6
+# UI libs
+import curses
+from curses import wrapper
+
+
+MAX_CHANNEL_AMOUNT = 6
+MAX_SCREEN_LENGTH = 16
 current_chain = 0
-global current_bar
-current_bar = 0
+
 is_song_playing = True
+
+
 
 bpm = 120
 
@@ -65,7 +74,7 @@ all_chain_data = []
 chain_data0 =  [0x00,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]     # PHRASES
       #       [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]]    # TRANSPOSE ( TODO, ignore all transposes that do not have a phrase assigneds )
 
-chain_data1 =  [0x01,0x01,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
+chain_data1 =  [0x01,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
 chain_data2 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
 chain_data3 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
 chain_data4 =  [0x04,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
@@ -110,7 +119,7 @@ all_phrase_data.append(phrase_data4)
 # do the next operation for every channel
 def get_max_chains_length():
     chainlenghts = []
-    for channel in range(max_channels_amount):
+    for channel in range(MAX_CHANNEL_AMOUNT):
 
         #go backwards through the chains elements
         for chains in range(len(song_data[channel])-1, -1, -1):
@@ -159,74 +168,91 @@ max_phrases_length = max(phraseslenghts)
 print('max_phrases_length:')
 print(max_phrases_length)
 
-
 print('Amount of chains in data:')
 print(len(all_chain_data))
 
-# debug printing without the use of curses
-for channel in range(max_channels_amount):
-    #print(f'Channel{channel}')
-    for chain_ in range(16):
-        #sys.stdout.write(f'{song_data[channel][chain_]}')
-        #sys.stdout.write(' ')
-        pass
-    #print('\n')
-    pass
+""" def main(stdscr):
 
-max_song_length = 16
+    stdscr.keypad(True)
+    stdscr.nodelay(True)
+    for column in range(MAX_SCREEN_LENGTH):
+        for row in range(MAX_CHANNEL_AMOUNT):
+            stdscr.addstr(f"{song_data[row][column]}")
 
-global step
-step = 0
-print(f'Ch1Ch2Ch3Ch4Ch5Ch6')
-while(is_song_playing):
-    if max_phrases_length == -1:
-        break
-
+    stdscr.refresh()
+    stdscr.getch()
     
-    for channel in range(max_channels_amount):
-        if step == 0:
-            #sys.stdout.write(f'{song_data[channel][current_bar]} ')
-            #sys.stdout.flush()
-            pass
+wrapper(main)
+ """
 
-        if song_data[channel][current_bar] != None:
-            
-            note = all_phrase_data[ int(song_data[channel][current_bar]) ][ step ]
-            
-            if note != None:
-                note = int(note)
-                outport.send(Message('note_on', channel=channel, note=note, velocity=120))
 
-                sys.stdout.write(f'{note} ')
 
-                time.sleep(0.001)
+def playSong():
+    global current_step
+    current_step = 0
 
-                outport.send(Message('note_off', channel=channel, note=note, velocity=120))
-                sys.stdout.flush()
-            else:
-                sys.stdout.write(f'-- ')
-        else:
-            sys.stdout.write(f'   ')
+    global current_bar
+    current_bar = 0
 
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+    global last_notes
+    last_notes = [None,None,None,None,None,None]
 
-    time.sleep(60/bpm/8) 
+    while(is_song_playing):
+        if max_phrases_length == -1:
+            break
+
         
-    for channel in range(max_channels_amount):
-        if song_data[channel][current_bar] != None:
+        for channel in range(MAX_CHANNEL_AMOUNT):
 
-            note = all_phrase_data[ int(song_data[channel][current_bar]) ][ step ]
-            if note != None:
-                note = int(note)
+            # debug_draw_current_chain(channel)
+
+            
+            if song_data[channel][current_bar] != None:
+                
+                note = all_phrase_data[ int(song_data[channel][current_bar]) ][ current_step ]
+                
+                last_notes[channel] = note
+
+                if note != None:
+                    note = int(note)
+                    outport.send(Message('note_on', channel=channel, note=note, velocity=120))
+
+                    # sys.stdout.write(f'{note} ')
+                    # sys.stdout.flush()
+                else:
+                    # sys.stdout.write(f'-- ')
+                    pass
+            else:
+                # sys.stdout.write(f'-- ')
+                pass
+
+        time.sleep(60/bpm/8) 
+
+        for channel in range(MAX_CHANNEL_AMOUNT):
+            if song_data[channel][current_bar] != None:
+
+                note = last_notes[channel]
+                if note != None:
+                    
+
+                    outport.send(Message('note_off', channel=channel, note=note, velocity=120))
+                    #sys.stdout.flush()
+
+            
+        
+        current_step +=1
+        if(current_step >= 16):
+            current_step = 0
+            current_bar += 1
+
+            if current_bar >= get_max_chains_length(): # MAX_SCREEN_LENGTH
+                current_bar = 0
+
+def debug_draw_current_chain(channel):
+    if current_step == 0:
+        sys.stdout.write(f'{song_data[channel][current_bar]} ')
+        sys.stdout.flush()
+        pass
 
 
-                outport.send(Message('note_off', channel=channel, note=note, velocity=120))
-                #sys.stdout.flush()
-    step +=1
-    if(step >= 16):
-        step = 0
-        current_bar += 1
-
-        if current_bar >= get_max_chains_length(): # max_song_length
-            current_bar = 0
+playSong()
