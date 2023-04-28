@@ -68,43 +68,41 @@ song_data[1][7] = 0x04
 
 
 # Generates chain data, there can be a variing amount of chains in a project
-all_chain_data = []
+chain_data = []
 
 # Example chain data
-chain_data0 =  [0x00,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]     # PHRASES
+chain0 =  [0x00,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]     # PHRASES
       #       [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]]    # TRANSPOSE ( TODO, ignore all transposes that do not have a phrase assigneds )
 
-chain_data1 =  [0x01,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
-chain_data2 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
-chain_data3 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
-chain_data4 =  [0x04,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
+chain1 =  [0x01,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
+chain2 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
+chain3 =  [0x02,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
+chain4 =  [0x04,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]      # PHRASES
 
 
 
 # Append chains to chain data
-all_chain_data.append(chain_data0)
-all_chain_data.append(chain_data1)
-all_chain_data.append(chain_data2)
-all_chain_data.append(chain_data3)
-all_chain_data.append(chain_data4)
+chain_data.append(chain0)
+chain_data.append(chain1)
+chain_data.append(chain2)
+chain_data.append(chain3)
+chain_data.append(chain4)
 
 
 
+phrase_data = []
 
-phrase_data0 =  [0x3c,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None] 
-phrase_data1 =  [None,None,None,None,0x5a,None,None,None,None,None,None,None,0x3c,None,0x3c,None] 
-phrase_data2 =  [None,None,None,0x40,0x5a,None,None,0x5a,None,None,None,None,0x5a,None,0x5a,0x5a] 
-phrase_data3 =  [None,None,0x30,None,None,None,0x30,None,None,None,0x30,None,None,None,0x30,None] 
-phrase_data4 =  [0x3c,None,None,0x43,0x45,None,0x49,None,0x49,None,0x45,0x45,0x40,None,None,0x43] 
+phrase0 =  [0x3c,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None] 
+phrase1 =  [None,None,None,None,0x5a,None,None,None,None,None,None,None,0x3c,None,0x3c,None] 
+phrase2 =  [None,None,None,0x40,0x5a,None,None,0x5a,None,None,None,None,0x5a,None,0x5a,0x5a] 
+phrase3 =  [None,None,0x30,None,None,None,0x30,None,None,None,0x30,None,None,None,0x30,None] 
+phrase4 =  [0x3c,None,None,0x43,0x45,None,0x49,None,0x49,None,0x45,0x45,0x40,None,None,0x43] 
 
-
-
-all_phrase_data = []
-all_phrase_data.append(phrase_data0)
-all_phrase_data.append(phrase_data1)
-all_phrase_data.append(phrase_data2)
-all_phrase_data.append(phrase_data3)
-all_phrase_data.append(phrase_data4)
+phrase_data.append(phrase0)
+phrase_data.append(phrase1)
+phrase_data.append(phrase2)
+phrase_data.append(phrase3)
+phrase_data.append(phrase4)
 
 
 
@@ -146,15 +144,15 @@ def get_max_chains_length():
 
 # this will evalueded for current playing chain, but is implemented for all here
 
-# THIS WORKS ON ALL_CHAIN_DATA
+# THIS WORKS ON chain_data
 # go backwards through the Phrase elements in all chains return max
 
 phraseslenghts = []
-for chains in range(len(all_chain_data)):
-    for phrases in range(len(all_chain_data[chains])-1, -1, -1):
+for chains in range(len(chain_data)):
+    for phrases in range(len(chain_data[chains])-1, -1, -1):
         
         # look for the first occurence of None, we're going backwards!
-        if all_chain_data[chains][phrases] != None:
+        if chain_data[chains][phrases] != None:
             
             # append the index of that orrcurence to the phraseslengths list
             phraseslenghts.append(phrases) 
@@ -169,7 +167,7 @@ print('max_phrases_length:')
 print(max_phrases_length)
 
 print('Amount of chains in data:')
-print(len(all_chain_data))
+print(len(chain_data))
 
 """ def main(stdscr):
 
@@ -194,10 +192,15 @@ def playSong():
     global current_bar
     current_bar = 0
 
-    global last_notes
-    last_notes = [None,None,None,None,None,None]
 
     while(is_song_playing):
+            
+        global last_notes
+
+
+        last_notes = [None,None,None,None,None,None]
+
+
         if max_phrases_length == -1:
             break
 
@@ -209,7 +212,7 @@ def playSong():
             
             if song_data[channel][current_bar] != None:
                 
-                note = all_phrase_data[ int(song_data[channel][current_bar]) ][ current_step ]
+                note = phrase_data[ int(song_data[channel][current_bar]) ][ current_step ]
                 
                 last_notes[channel] = note
 
