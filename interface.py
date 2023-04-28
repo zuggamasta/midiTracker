@@ -44,8 +44,6 @@ config_data = []
 config=  [0x00,None,0xff,0xab]     
 config_data.append(config)
 
-
-
 def updateInput(scr,data,max_column,max_row):
     try:
         key = scr.getkey()
@@ -61,9 +59,7 @@ def updateInput(scr,data,max_column,max_row):
     elif key == "kLFT5":
         current_scene -= 1
  
-
     # MODIFY DATA
-
     elif key == "KEY_SR":
         if data[pos[0]][pos[1]] == None:
             data[pos[0]][pos[1]] = 0x0
@@ -90,7 +86,6 @@ def updateInput(scr,data,max_column,max_row):
         else:
             data[pos[0]][pos[1]] = None
 
-
     # MOVE CURSOR
     elif key == "KEY_UP":
         pos[1] -= 1
@@ -104,7 +99,7 @@ def updateInput(scr,data,max_column,max_row):
     # QUIT APPLICATION
 
     elif key == "q":
-            quit()
+            quit("\n quit \n \n")
     else:
         pass
     
@@ -124,11 +119,9 @@ def updateInput(scr,data,max_column,max_row):
     if pos[1] >= max_row:
         pos[1] = 0
 
-
     scr.refresh()
 
     return pos
-
 
 def drawData(scr,data,max_column,max_row):
     data_win = curses.newwin(16,6*4+1,3,2)
@@ -150,11 +143,8 @@ def drawData(scr,data,max_column,max_row):
                 else:
                    data_win.addstr(column,row*4,f" {slot:02x} ",curses.A_BOLD)
 
-
-
     scr.refresh()
     data_win.refresh()
-
 
 def drawColumNumbers(scr):
 
@@ -162,11 +152,8 @@ def drawColumNumbers(scr):
     for frame in range(16):
         header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE)
 
-    #
     scr.refresh()
     header_win.refresh()
-
-
 
 def main(stdscr):
 
@@ -176,37 +163,39 @@ def main(stdscr):
     # HIDE CURSES CURSOR
     curses.curs_set(0)
 
-    stdscr.addstr("          aMidiTracker v.01 ")
-
+    stdscr.addstr("aMidiTracker v.01 ")
 
     while 1:
-        
+
+        outport = None
+
+        if outport == None:
+            available_ports = mido.get_input_names()
+
+            outport = mido.open_output()
+
+        stdscr.addstr(0,13,f"{available_ports}")
+
         match current_scene:
             
-
             case 0:
-                
                 # SONG VIEW
                 # Header
                 stdscr.addstr(1,2,f"{SCENES[current_scene]} 00      ")
                 stdscr.addstr(2,2,f"Trk1Trk2Trk3Trk4Trk5Trk6",curses.A_REVERSE)
-
-
+                
                 # DATA
                 channels = 6
                 steps = 16
                 updateInput(stdscr,song_data,channels,steps)
                 drawColumNumbers(stdscr)
                 drawData(stdscr,song_data,channels,steps)
-
-
             case 1:
                 # CHAIN VIEW
                 # Header
                 stdscr.addstr(1,2,f"{SCENES[current_scene]} 00      ")
                 stdscr.addstr(2,2,f"PhrsTrsp",curses.A_REVERSE)
                 stdscr.addstr("                          ")
-
 
                 # DATA
                 channels = 1
@@ -220,8 +209,6 @@ def main(stdscr):
                 stdscr.addstr(1,2,f"{SCENES[current_scene]} 00      ")
                 stdscr.addstr(2,2,f"Note CMD",curses.A_REVERSE)
                 stdscr.addstr("                          ")
-
-
 
                 # DATA
                 channels = 1
