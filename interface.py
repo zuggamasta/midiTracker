@@ -12,6 +12,9 @@ from curses import wrapper
 
 #CONSTANTS
 SCENES = ["song","chain","phrase","config"]
+NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F# ','G ','G#','A ','Bb','B ' ]
+SLOT_WIDTH = 4
+
 
 pos = [0,0]
 
@@ -99,7 +102,7 @@ def updateInput(scr,data,max_column,max_row):
     # QUIT APPLICATION
 
     elif key == "q":
-            quit("\n quit \n \n")
+            quit()
     else:
         pass
     
@@ -119,32 +122,67 @@ def updateInput(scr,data,max_column,max_row):
     if pos[1] >= max_row:
         pos[1] = 0
 
+    if data[pos[0]][pos[1]] != None:
+        if data[pos[0]][pos[1]] < 0:
+            data[pos[0]][pos[1]] = 255
+        if data[pos[0]][pos[1]] > 255:
+            data[pos[0]][pos[1]] = 0
+
     scr.refresh()
 
     return pos
 
-def drawData(scr,data,max_column,max_row):
+def drawData(scr,data,max_column,max_row,is_note):
     data_win = curses.newwin(16,6*4+1,3,2)
 
     for column in range(max_row):
         for row in range(max_column):
             slot = data[row][column]
-            if column == pos[1] and row == pos[0]:
-                # HIGHLIGHT VIRTUAL CURSOR POS
-
-                if slot == None:
-                    data_win.addstr(column,row*4,f" -- ", curses.A_REVERSE | curses.A_BOLD)
-                else:
-                    data_win.addstr(column,row*4,f" {slot:02x} ", curses.A_REVERSE | curses.A_BOLD)
+            note = 0x0
+            render_slot = ""
+            if slot == None:
+                render_slot = " -- "
             else:
-                # DRAW REST OF DATA
-                if slot == None:
-                  data_win.addstr(column,row*4,f" -- ",curses.A_BOLD)
+                if is_note:
+                    note = NOTES_LOOKUP[int(slot)%12]
+                    render_slot = f" {note}{round(int(slot/12)%12)+1}"
                 else:
-                   data_win.addstr(column,row*4,f" {slot:02x} ",curses.A_BOLD)
+                    render_slot = f" {slot:02x} "
+
+            if column == pos[1] and row == pos[0]:
+                data_win.addstr(column,row*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
+            else:
+                data_win.addstr(column,row*SLOT_WIDTH,render_slot, curses.A_BOLD)
 
     scr.refresh()
     data_win.refresh()
+
+def note_on(data,max_column,max_row):
+
+    for column in range(max_row):
+        for row in range(max_column):
+            slot = data[row][column]
+            note = 0x0
+            render_slot = ""
+            if slot == None:
+                # not a musical note
+                pass
+            else:
+                # set musical note to channel message
+                # output note on
+
+                pass
+
+            ## TODO: implement preliste if is_song_playing  == false
+
+            if column == pos[1] and row == pos[0]:
+                # prelisten ?
+                # set musical note to channel message
+                # output note on
+                pass
+
+
+
 
 def drawColumNumbers(scr):
 
@@ -189,7 +227,7 @@ def main(stdscr):
                 steps = 16
                 updateInput(stdscr,song_data,channels,steps)
                 drawColumNumbers(stdscr)
-                drawData(stdscr,song_data,channels,steps)
+                drawData(stdscr,song_data,channels,steps,is_note=False)
             case 1:
                 # CHAIN VIEW
                 # Header
@@ -202,7 +240,7 @@ def main(stdscr):
                 steps = 16
                 updateInput(stdscr,chain_data,channels,steps)
                 drawColumNumbers(stdscr)
-                drawData(stdscr,chain_data,channels,steps)
+                drawData(stdscr,chain_data,channels,steps,is_note=False)
             case 2:
                 # PHRASE VIEW
                 # Header
@@ -215,7 +253,7 @@ def main(stdscr):
                 steps = 16
                 updateInput(stdscr,phrase_data,channels,steps)
                 drawColumNumbers(stdscr)
-                drawData(stdscr,phrase_data,channels,steps)
+                drawData(stdscr,phrase_data,channels,steps,is_note=True)
             case 3:
                 # CONFIG VIEW
                 # Header
@@ -232,7 +270,7 @@ def main(stdscr):
                 channels = 1
                 steps = 4
                 updateInput(stdscr,config_data,channels,steps)
-                drawData(stdscr,song_data,channels,steps)
+                drawData(stdscr,song_data,channels,steps,is_note=False)
                 pass
 
             case _:
