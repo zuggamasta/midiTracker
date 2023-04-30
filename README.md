@@ -29,7 +29,18 @@ Each chain can have a variable amount of phrases. (As of now only 1 phrase long 
 
 Phrases always consist of 16 steps, to each of these steps a musical note can be assigned. At this point in time notes are entered as numbers, with note 60 representing the middle C3.
 
-process can only be killed with ctrl + C, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
+### Keyboard Controls:
+Arrow Keys: Navigation on Data Grid
+Shift + Left Arrow: -12 units / 1 Octave
+Shift + Right Arrow: +12 units / 1 Octave
+Shift + Down Arrow: -1 unit / Semitone
+Shift + Up Arrow: +1 / Semitone
+←→↑↓
+Strg + Right Arrow:  Next Scene
+Strg + Left Arrow:  Next Scene
+
+
+process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
 # This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
 

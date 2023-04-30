@@ -77,12 +77,12 @@ def updateInput(scr,data,max_column,max_row):
         if data[pos[0]][pos[1]] == None:
             data[pos[0]][pos[1]] = 0x0
         else:
-            data[pos[0]][pos[1]] += 0x10
+            data[pos[0]][pos[1]] += 12
     elif key == "KEY_SLEFT":
         if data[pos[0]][pos[1]] == None:
             data[pos[0]][pos[1]] = 0x0
         else:
-            data[pos[0]][pos[1]] -= 0x10
+            data[pos[0]][pos[1]] -= 12
     elif key == "x":
         if data[pos[0]][pos[1]] == None:
             pass
