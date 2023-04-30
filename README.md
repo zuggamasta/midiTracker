@@ -42,9 +42,9 @@ Shift + *↑* : Up Arrow: +1 / Semitone
 
 
 
-Strg + *→* :  Next Scene
+Ctrl + *→* :  Next Scene
 
-Strg + *←* :  Next Scene
+Ctrl + *←* :  Next Scene
 
 q : Quit
 
@@ -52,6 +52,10 @@ q : Quit
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
 # This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
+
+- [ ] https://github.com/zuggamasta/midiTracker/issues/6
+- [ ] 
+
 
 ### python modules used:
 - MIDO for easy midi objects - https://github.com/mido/mido
