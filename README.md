@@ -49,8 +49,10 @@ q : Quit
 
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
-# This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
+### Diagrams to keep my work organised
+![data diagram](/Documentation/diagram_230501.png)
 
+# This tool is in its prototype phase
 
 ### python modules used:
 - MIDO for easy midi objects - https://github.com/mido/mido
