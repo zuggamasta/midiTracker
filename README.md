@@ -11,23 +11,21 @@
 ```                                 
 
 
-Is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
+aMidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
 
-I am developing this tool for myself, but please let me know if it is useful for you, too. 
+I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
 
 ## Prerequisites
 
-Tested with python 3.9.10. You'll need a python environment with mido, rtmidi and curses modules available.
+I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules available.
 
-## Documentation
+## Documentation / Issues
 
-aMidiTracker currently uses the first available MidiPort, this will change at one point.
+- [ ] https://github.com/zuggamasta/midiTracker/issues/2 aMidiTracker currently uses the first available MidiPort, this will change at one point.
 
-Arrange your composition in song view, filling the channels with phrase chains.
+- [ ] https://github.com/zuggamasta/midiTracker/issues/3 Arrange your composition in song view, filling the channels with phrase chains. Each chain can have a variable amount of phrases. (As of now only 1 phrase long chains work correct)
 
-Each chain can have a variable amount of phrases. (As of now only 1 phrase long chains work correct)
-
-Phrases always consist of 16 steps, to each of these steps a musical note can be assigned. At this point in time notes are entered as numbers, with note 60 representing the middle C3.
+- [ ] https://github.com/zuggamasta/midiTracker/issues/6 Phrases always consist of 16 steps, to each of these steps a musical note can be assigned. At this point in time notes are entered as numbers, with note 60 representing the middle C3.
 
 ### Keyboard Controls:
 *← → ↑ ↓* : Navigation on Data Grid
@@ -52,9 +50,6 @@ q : Quit
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
 # This tool is in its prototype phase: Constant updates, breaking changes, bad codebase.
-
-- [ ] https://github.com/zuggamasta/midiTracker/issues/6
-- [ ] 
 
 
 ### python modules used:
