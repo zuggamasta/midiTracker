@@ -15,6 +15,12 @@ aMidiTracker is a small tracker that sequences notes in a nested vertical layout
 
 I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
 
+## Screenshots
+
+![screenshot](/Documentation/Screenshot_2023-05-02.png)
+![screenshot](/Documentation/Screenshot_2023-05-02b.png)
+
+
 ## Prerequisites
 
 I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules available.
