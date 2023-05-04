@@ -1,6 +1,7 @@
 # utilities
 import sys
 import time
+import math
 
 # midi libs
 import mido
@@ -17,8 +18,6 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 
-dirty = True
-
 time_step = 0
 
 cursor = [0,0]
@@ -34,54 +33,27 @@ active_data = 0
 active_chain = []
 active_phrase = []
 
-
-# Generates empty CHAIN slots for Song 
+# SONGS
 current_song = 0
-song0 = [[None for _ in range(16)] for _ in range(6)]
-
-song0[0][0] = 0x00
-
 song_data = []
+song0 = [[None for _ in range(16)] for _ in range(6)]
 song_data.append(song0)
 
+# CHAINS
 current_chain = 0
 chain_data = []
-chain0 =    [[None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None],  # PHRASES
-             [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]]   # TRANSPOSE
-
-chain1 =    [[0x01,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None],  # PHRASES
-             [0x10,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]]   # TRANScursorE
-
-chain_data.append(chain1)
+chain0 = [[None for _ in range(16)] for _ in range(2)] # phrase | transpose
+chain_data.append(chain0)
 
 current_phrase = 0
+# PHRASES
 phrase_data = []
-phrase0 =  [[0x5c,None,None,None,None,None,None,None, # NOTES
-             0x5c,None,None,None,None,None,None,None],
-            [0x5c,None,None,None,None,None,None,None, # CMD
-             0x5c,None,None,None,None,None,None,None]]
-
-phrase1 =  [[0x5c,None,None,None,None,None,None,None, # NOTES
-             0x5c,0xff,0xff,0xff,0xff,0xff,None,None],
-            [0x5c,None,None,None,None,None,None,None, # CMD
-             0x5c,None,None,None,None,None,None,None]]
-  
+phrase0 = [[None for _ in range(16)] for _ in range(2)] # note | CMD
 phrase_data.append(phrase0)
 
-phrase_data.append(phrase1)
-
-phrase2 =  [[0x5c,None,None,None,None,None,None,None, # NOTES
-             0x5c,0xff,0xff,0xff,0xff,0xff,None,None],
-            [0x5c,None,None,None,None,None,None,None, # CMD
-             0x5c,None,None,None,None,None,None,None]]
-
-phrase_data.append(phrase2)
-
-
-
-
+current_config = 0
 config_data = []
-config=  [[0x00,None,0xff,0xab]   ]  
+config=  [[0x00,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
 config_data.append(config)
 
 def updateInput(scr,data,max_column,max_row):
@@ -91,8 +63,8 @@ def updateInput(scr,data,max_column,max_row):
     global current_song
     global current_chain
     global current_phrase
+    global curret_config
     global active_data
-    global dirty
     
     
 
@@ -101,10 +73,6 @@ def updateInput(scr,data,max_column,max_row):
     except:
         key = None
 
-    if key != None:
-        dirty = True
-    else:
-        dirty = False
 
     if current_scene == 0:
         active_data = current_song
@@ -113,7 +81,7 @@ def updateInput(scr,data,max_column,max_row):
     elif current_scene == 2:
         active_data = current_phrase
     elif current_scene == 3:
-        active_data == 0
+        active_data == current_config
 
 
     # SWITCH SCENE 
@@ -127,12 +95,12 @@ def updateInput(scr,data,max_column,max_row):
         # CHAIN SCENE
         if current_scene == 1:
             if current_chain+2 > len(chain_data) :
-                chain_data.append(chain0)
+                chain_data.append([[None for _ in range(16)] for _ in range(2)])
             current_chain += 1
         # PHRASE SCENE
         if current_scene == 2:
             if current_phrase+2 > len(phrase_data) :
-                phrase_data.append(phrase0)
+                phrase_data.append([[None for _ in range(16)] for _ in range(2)])
             current_phrase += 1
         
     elif key == "kDN5":
@@ -141,6 +109,7 @@ def updateInput(scr,data,max_column,max_row):
             current_chain -= 1
             if current_chain < 0:
                 current_chain = 0
+
 
         # PHRASE SCENE
         if current_scene == 2:
@@ -187,8 +156,6 @@ def updateInput(scr,data,max_column,max_row):
         cursor[0] += 1
     elif key == "KEY_LEFT":
         cursor[0] -= 1
-    
-    
 
     # QUIT APPLICATION
 
@@ -203,7 +170,6 @@ def updateInput(scr,data,max_column,max_row):
     if current_scene < 0:
         current_scene = 3
     
-
     # WRAP CURSOR AROUND
     if cursor[0] < 0:
         cursor[0] = max_column-1
@@ -214,6 +180,8 @@ def updateInput(scr,data,max_column,max_row):
     if cursor[1] >= max_row:
         cursor[1] = 0
 
+    if current_scene == 4:
+        active_data = 0
 
     if data[active_data][cursor[0]][cursor[1]] != None:
         if data[active_data][cursor[0]][cursor[1]] < 0:
@@ -251,7 +219,6 @@ def drawData(scr,data,max_column,max_row,render_style):
 
     scr.refresh()
     data_win.refresh()
-
 
 song_step = 0
 
@@ -328,9 +295,7 @@ def main(stdscr):
 
     outport = None
 
-
     while 1:
-
 
         if outport == None:
             available_ports = mido.get_input_names()
@@ -393,7 +358,7 @@ def main(stdscr):
                     stdscr.addstr(i+3,0,"  ")
 
                 # DATA
-                channels = 1
+                channels = 2
                 steps = 4
                 updateInput(stdscr,config_data,channels,steps)
                 drawData(stdscr,config_data,channels,steps,render_style='hex')
@@ -405,10 +370,10 @@ def main(stdscr):
         
         
         
-        if (time_step/4) % 1 == 0:
-            stdscr.addstr(2,0,f"  ", curses.A_REVERSE | RED)
-        else:
+        if (time_step/4) % 2 == 0:
             stdscr.addstr(2,0,f"  ")
+        else:
+            stdscr.addstr(2,0,f"  ", curses.A_REVERSE | RED)
 
         time.sleep(60/bpm/8) 
         time_step +=1
