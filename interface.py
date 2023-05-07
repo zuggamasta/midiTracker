@@ -33,6 +33,13 @@ active_data = 0
 active_chain = []
 active_phrase = []
 
+midi_messages = [None for _ in range(MAX_CHANNELS)]
+
+
+song_step = 0
+chain_step = [0 for _ in range(MAX_CHANNELS)]
+phrase_step = [0 for _ in range(MAX_CHANNELS)]
+
 # SONGS
 current_song = 0
 song_data = []
@@ -65,7 +72,6 @@ def updateInput(scr,data,max_column,max_row):
     global current_phrase
     global curret_config
     global active_data
-    
     
 
     try:
@@ -220,26 +226,57 @@ def drawData(scr,data,max_column,max_row,render_style):
     scr.refresh()
     data_win.refresh()
 
-song_step = 0
 
-def play_song():
+# NOTE: Playback code happens here
+
+def play_song(song):
     global song_step
-    for channel in range(MAX_CHANNELS):
-        active_chain_no = song_data[current_song][channel][song_step]
-        play_chain(active_chain_no,channel)
-        pass
-    song_step += 1 
-    pass 
+    global song_data
+    for song_channel in range(MAX_CHANNELS):
+        
+        song_step = 0
 
-# CHAIN_DATA[chain_number][0=phrase,1=transcursore][chain_step]
-def play_chain(chain_no,channel,scr):
-    chain_step = 0
-      
-    if chain_data[chain_no][0][chain_step] != None:
-        scr.addstr(3,36,f"debug: {chain_data[chain_no][0][chain_step]:02x}", curses.A_ITALIC)
+        if song_step < 16:
+            active_chain_no = song_data[song][song_channel][song_step]
+            if active_chain_no !=  None:
+                play_chain(active_chain_no,song_channel)
+            else:
+                pass
+            song_step +=1
 
-        pass
-    pass
+
+def play_chain(chain_no,channel):
+    global chain_step 
+    if chain_step[] < 16:
+        phrase = chain_data[chain_no][0][chain_step]        
+        if phrase !=  None:
+            play_phrase(phrase, channel)
+        else:
+            pass
+        chain_step[channel] += 1
+
+
+def play_phrase(phrase_no,channel):
+    global phrase_step
+    if phrase_step[channel] < 16:
+        note = phrase_data[phrase_no][0][phrase_step]
+        if note !=  None:
+            play_note(note, channel)
+        else:
+            play_rest()
+        phrase_step[channel] += 1 
+
+
+def play_note(note, channel):
+    outport.send(Message('note_on', channel=channel, note=note, velocity=120))
+    time.sleep(60/bpm/16)
+    outport.send(Message('note_off', channel=channel, note=note, velocity=120))
+
+def play_rest():
+    time.sleep(60/bpm/16)
+
+
+# NOTE: Playback code ends here
 
 def note_on(data,active_data,max_column,max_row):
     global last_notes
@@ -268,7 +305,6 @@ def note_on(data,active_data,max_column,max_row):
 
 
 
-
 def drawColumNumbers(scr):
     header_win = curses.newwin(17,2,3,0)
     for frame in range(16):
@@ -289,10 +325,12 @@ def main(stdscr):
     # CURSES SETUP
     stdscr.keypad(True)
     stdscr.nodelay(True)
+    #stdscr.timeout(150)
     # HIDE CURSES CURSOR
     curses.curs_set(0)
     stdscr.addstr("aMidiTracker v.01 ")
 
+    global outport
     outport = None
 
     while 1:
@@ -368,9 +406,11 @@ def main(stdscr):
             
                 pass
         
+        if is_song_playing:
+            play_song(0)
         
         
-        if (time_step/4) % 2 == 0:
+        if (time_step/2) % 2 == 0:
             stdscr.addstr(2,0,f"  ")
         else:
             stdscr.addstr(2,0,f"  ", curses.A_REVERSE | RED)
