@@ -37,8 +37,8 @@ midi_messages = [None for _ in range(MAX_CHANNELS)]
 
 
 song_step = 0
-chain_step = [0 for _ in range(MAX_CHANNELS)]
-phrase_step = [0 for _ in range(MAX_CHANNELS)]
+chain_step = 0
+phrase_step = 0
 
 # SONGS
 current_song = 0
@@ -231,6 +231,8 @@ def drawData(scr,data,max_column,max_row,render_style):
 
 def play_song(song):
     global song_step
+    global chain_step
+    global phrase_step
     global song_data
     for song_channel in range(MAX_CHANNELS):
         
@@ -242,38 +244,50 @@ def play_song(song):
                 play_chain(active_chain_no,song_channel)
             else:
                 pass
-            song_step +=1
+
+    time.sleep(60/bpm/16)
+    phrase_step += 1 
+
+    if phrase_step >= 16:
+        phrase_step = 0
+        chain_step += 1
+
+    if chain_step >= 16:
+        chain_step = 0
+        song_step +=1
+    
+    if song_step >= 16:
+        song_step = 0
 
 
 def play_chain(chain_no,channel):
     global chain_step 
-    if chain_step[] < 16:
+    if chain_step < 16:
         phrase = chain_data[chain_no][0][chain_step]        
         if phrase !=  None:
             play_phrase(phrase, channel)
         else:
             pass
-        chain_step[channel] += 1
+        chain_step += 1
 
 
 def play_phrase(phrase_no,channel):
     global phrase_step
-    if phrase_step[channel] < 16:
+    if phrase_step < 16:
         note = phrase_data[phrase_no][0][phrase_step]
         if note !=  None:
             play_note(note, channel)
         else:
             play_rest()
-        phrase_step[channel] += 1 
 
 
 def play_note(note, channel):
     outport.send(Message('note_on', channel=channel, note=note, velocity=120))
-    time.sleep(60/bpm/16)
+    time.sleep(1/1000)
     outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
 def play_rest():
-    time.sleep(60/bpm/16)
+    pass
 
 
 # NOTE: Playback code ends here
@@ -409,15 +423,6 @@ def main(stdscr):
         if is_song_playing:
             play_song(0)
         
-        
-        if (time_step/2) % 2 == 0:
-            stdscr.addstr(2,0,f"  ")
-        else:
-            stdscr.addstr(2,0,f"  ", curses.A_REVERSE | RED)
-
-        time.sleep(60/bpm/8) 
-        time_step +=1
-
         
 
         stdscr.refresh()
