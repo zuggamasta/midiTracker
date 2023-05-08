@@ -17,6 +17,14 @@ NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F# ','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
+MAX_MIDI = 128
+MAX_SONG_STEPS = 16
+MAX_CHAIN_STEPS = 16
+MAX_PHRASE_STEPS = 16
+
+SUB_STEPS = 4
+
+sub_step = 0
 
 time_step = 0
 
@@ -44,19 +52,22 @@ phrase_step = 0
 # SONGS
 current_song = 0
 song_data = []
-song0 = [[None for _ in range(16)] for _ in range(6)]
+song0 = [[None for _ in range(MAX_SONG_STEPS)] for _ in range(MAX_CHANNELS)]
 song_data.append(song0)
 
 # CHAINS
 current_chain = 0
 chain_data = []
-chain0 = [[0 for _ in range(16)] for _ in range(2)] # phrase | transpose
+chain0 = [[0 for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] # phrase | transpose
 chain_data.append(chain0)
+chain1 = [[1 for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] # phrase | transpose
+chain_data.append(chain1)
+
 
 current_phrase = 0
 # PHRASES
 phrase_data = []
-phrase0 = [[None for _ in range(16)] for _ in range(2)] # note | CMD
+phrase0 = [[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] # note | CMD
 phrase_data.append(phrase0)
 
 # NOTES
@@ -70,13 +81,16 @@ config=  [[0x00,None,0xff,0xab],[0x00,None,0xff,0xab] ]
 config_data.append(config)
 
 def updateInput(scr,data,max_column,max_row):
+    global song_step
+    global chain_step
+    global phrase_step
 
     global cursor
     global current_scene
     global current_song
     global current_chain
     global current_phrase
-    global curret_config
+    global current_config
     global active_data
     
 
@@ -107,12 +121,12 @@ def updateInput(scr,data,max_column,max_row):
         # CHAIN SCENE
         if current_scene == 1:
             if current_chain+2 > len(chain_data) :
-                chain_data.append([[None for _ in range(16)] for _ in range(2)])
+                chain_data.append([[None for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)])
             current_chain += 1
         # PHRASE SCENE
         if current_scene == 2:
             if current_phrase+2 > len(phrase_data) :
-                phrase_data.append([[None for _ in range(16)] for _ in range(2)])
+                phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
     elif key == "kDN5":
@@ -130,7 +144,15 @@ def updateInput(scr,data,max_column,max_row):
                 current_phrase = 0
  
     elif key == " ":
-        play_chain(0,0,scr)
+        panic()
+        song_step = 0
+        chain_step = 0
+        phrase_step = 0
+        global current_notes
+        global last_notes
+        current_notes = [None for _ in range(MAX_CHANNELS)]
+        last_notes = [None for _ in range(MAX_CHANNELS)]
+    
 
     # MODIFY DATA
     elif key == "KEY_SR":
@@ -181,6 +203,7 @@ def updateInput(scr,data,max_column,max_row):
         current_scene = 0
     if current_scene < 0:
         current_scene = 3
+
     
     # WRAP CURSOR AROUND
     if cursor[0] < 0:
@@ -192,21 +215,23 @@ def updateInput(scr,data,max_column,max_row):
     if cursor[1] >= max_row:
         cursor[1] = 0
 
-    if current_scene == 4:
+    if current_scene == 3:
         active_data = 0
+        current_config = 0
 
     if data[active_data][cursor[0]][cursor[1]] != None:
         if data[active_data][cursor[0]][cursor[1]] < 0:
-            data[active_data][cursor[0]][cursor[1]] = 255
-        if data[active_data][cursor[0]][cursor[1]] > 255:
+            data[active_data][cursor[0]][cursor[1]] = MAX_MIDI-1
+        if data[active_data][cursor[0]][cursor[1]] > MAX_MIDI-1:
             data[active_data][cursor[0]][cursor[1]] = 0
+
 
     scr.refresh()
 
     return cursor
 
 def drawData(scr,data,max_column,max_row,render_style):
-    data_win = curses.newwin(16,6*4+1,3,2)
+    data_win = curses.newwin(16,MAX_CHANNELS*4+1,3,2)
 
     for column in range(max_row):
         for row in range(max_column):
@@ -241,43 +266,48 @@ def play_song(song):
     global phrase_step
     global song_data
     global current_notes
+    global sub_step
 
 
     for song_channel in range(MAX_CHANNELS):
         
-        if song_step < 16:
+        if song_step < MAX_SONG_STEPS:
             active_chain_no = song_data[song][song_channel][song_step]
             if active_chain_no !=  None:
                 play_chain(active_chain_no,song_channel)
             else:
                 pass
     play_notes(current_notes)
-    time.sleep(60/bpm/16)
-    stop_notes(current_notes)
+    time.sleep(60/bpm/4/SUB_STEPS)
+    sub_step += 1
 
-    phrase_step += 1 
+    if(sub_step >= SUB_STEPS):
+        stop_notes(current_notes)
+        phrase_step += 1 
+        sub_step = 0
 
-    if phrase_step >= 16:
+
+
+
+    if phrase_step >= MAX_PHRASE_STEPS:
         phrase_step = 0
         chain_step += 1
 
-    if chain_step >= 16:
+    if chain_step >= MAX_CHAIN_STEPS:
         chain_step = 0
         song_step +=1
     
-    if song_step >= 16:
+    if song_step >= MAX_SONG_STEPS:
         song_step = 0
 
 
 def play_chain(chain_no,channel):
     global chain_step 
-    if chain_step < 16:
-        phrase = chain_data[chain_no][0][chain_step]        
-        if phrase !=  None:
-            play_phrase(phrase, channel)
-        else:
-            pass
-        chain_step += 1
+    phrase = chain_data[chain_no][0][chain_step]        
+    if phrase !=  None:
+        play_phrase(phrase, channel)
+    else:
+        pass
 
 
 def play_phrase(phrase_no,channel):
@@ -307,6 +337,13 @@ def stop_notes(notes):
 
 def play_rest():
     pass
+
+def panic():
+    for channel in range(MAX_CHANNELS):
+        for note in range(MAX_MIDI):
+            outport.send(Message('note_off', channel=channel, note=note, velocity=120))
+
+
 
 
 # NOTE: Playback code ends here
@@ -348,6 +385,10 @@ def main(stdscr):
 
         stdscr.addstr(0,13,f"{available_ports[0]}")
 
+        stdscr.addstr(19,2,f"song_step:{song_step:02}",curses.A_REVERSE)
+        stdscr.addstr(20,2,f"chain_step:{chain_step:02}",curses.A_REVERSE)
+        stdscr.addstr(21,2,f"phrase_step:{phrase_step:02}",curses.A_REVERSE)
+
         match current_scene:
             
             case 0:
@@ -356,9 +397,12 @@ def main(stdscr):
                 
                 stdscr.addstr(1,2,f"{SCENES[current_scene]} {current_song:02}      ")
                 stdscr.addstr(2,2,f"Trk1Trk2Trk3Trk4Trk5Trk6",curses.A_REVERSE)
+               
+
+
                 
                 # DATA
-                channels = 6
+                channels = MAX_CHANNELS
                 steps = 16
                 updateInput(stdscr,song_data,channels,steps)
                 drawColumNumbers(stdscr)
@@ -392,7 +436,7 @@ def main(stdscr):
             case 3:
                 # CONFIG VIEW
                 # Header
-                stdscr.addstr(1,2,f"{SCENES[current_scene]} ")
+                stdscr.addstr(1,2,f"{SCENES[current_scene]}    ")
                 stdscr.addstr(2,2,f"Val Key",curses.A_REVERSE)
 
                 # clear line
