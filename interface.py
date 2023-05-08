@@ -20,6 +20,7 @@ MAX_CHANNELS = 6
 
 time_step = 0
 
+
 cursor = [0,0]
 
 is_song_playing = True
@@ -49,7 +50,7 @@ song_data.append(song0)
 # CHAINS
 current_chain = 0
 chain_data = []
-chain0 = [[None for _ in range(16)] for _ in range(2)] # phrase | transpose
+chain0 = [[0 for _ in range(16)] for _ in range(2)] # phrase | transpose
 chain_data.append(chain0)
 
 current_phrase = 0
@@ -58,6 +59,11 @@ phrase_data = []
 phrase0 = [[None for _ in range(16)] for _ in range(2)] # note | CMD
 phrase_data.append(phrase0)
 
+# NOTES
+current_notes = [None for _ in range(MAX_CHANNELS)]
+last_notes = [None for _ in range(MAX_CHANNELS)]
+
+# CONFIG
 current_config = 0
 config_data = []
 config=  [[0x00,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
@@ -234,18 +240,21 @@ def play_song(song):
     global chain_step
     global phrase_step
     global song_data
+    global current_notes
+
+
     for song_channel in range(MAX_CHANNELS):
         
-        song_step = 0
-
         if song_step < 16:
             active_chain_no = song_data[song][song_channel][song_step]
             if active_chain_no !=  None:
                 play_chain(active_chain_no,song_channel)
             else:
                 pass
-
+    play_notes(current_notes)
     time.sleep(60/bpm/16)
+    stop_notes(current_notes)
+
     phrase_step += 1 
 
     if phrase_step >= 16:
@@ -275,49 +284,32 @@ def play_phrase(phrase_no,channel):
     global phrase_step
     if phrase_step < 16:
         note = phrase_data[phrase_no][0][phrase_step]
-        if note !=  None:
-            play_note(note, channel)
-        else:
-            play_rest()
+        save_note(note, channel)
 
 
-def play_note(note, channel):
-    outport.send(Message('note_on', channel=channel, note=note, velocity=120))
-    time.sleep(1/1000)
-    outport.send(Message('note_off', channel=channel, note=note, velocity=120))
+def save_note(note, channel):
+    
+    current_notes[channel] = note
+    last_notes[channel] = note
+
+
+
+def play_notes(notes):
+    for channel in range(MAX_CHANNELS):
+        if notes[channel] != None:
+            outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+
+def stop_notes(notes):
+    for channel in range(MAX_CHANNELS):
+        if notes[channel] != None:
+            outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
+
 
 def play_rest():
     pass
 
 
 # NOTE: Playback code ends here
-
-def note_on(data,active_data,max_column,max_row):
-    global last_notes
-    last_notes = [None,None,None,None,None,None]
-    
-    for column in range(max_row):
-        for row in range(max_column):
-            slot = data[active_data][row][column]
-            
-            if slot == None:
-                # not a musical note
-                pass
-            else:
-                # set musical note to channel message
-                # output note on
-
-                pass
-
-            ## TODO: implement preliste if is_song_playing  == false
-
-            if column == cursor[1] and row == cursor[0]:
-                # prelisten ?
-                # set musical note to channel message
-                # output note on
-                pass
-
-
 
 def drawColumNumbers(scr):
     header_win = curses.newwin(17,2,3,0)
