@@ -18,20 +18,16 @@ I am developing this tool for myself, but I'll try to make it accessible to othe
 ## Screenshots
 
 ![screenshot](/Documentation/Screenshot_2023-05-02.png)
-![screenshot](/Documentation/Screenshot_2023-05-02b.png)
 
 
 ## Prerequisites
 
-I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules available.
+I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
 ## Documentation / Issues
 
-- [ ] https://github.com/zuggamasta/midiTracker/issues/2 aMidiTracker currently uses the first available MidiPort, this will change at one point.
 
-- [ ] https://github.com/zuggamasta/midiTracker/issues/3 Arrange your composition in song view, filling the channels with phrase chains. Each chain can have a variable amount of phrases. (As of now only 1 phrase long chains work correct)
 
-- [ ] https://github.com/zuggamasta/midiTracker/issues/6 Phrases always consist of 16 steps, to each of these steps a musical note can be assigned. At this point in time notes are entered as numbers, with note 60 representing the middle C3.
 
 ### Keyboard Controls:
 *← → ↑ ↓* : Navigation on Data Grid
