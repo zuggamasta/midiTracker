@@ -46,9 +46,21 @@ Ctrl + *→* :  Next Scene
 
 Ctrl + *←* :  Next Scene
 
+
+Space : Panic / Restart
+
+s : Save
+
 q : Quit
 
 
+### Saving / Loading
+You can save the current state of your file with the 's' button. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use ```miditracker.py -load yoursavefile.json```to do so.
+
+### PANIC / STOP ALL NOTES / RESTART
+Use the space key to stop all playing midi channels and notes. This also restarts playback.
+
+### Quitting
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
 ### Diagrams to keep my work organised
