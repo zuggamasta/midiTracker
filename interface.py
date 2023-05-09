@@ -1,7 +1,10 @@
 # utilities
 import sys
 import time
-import math
+import json
+from datetime import datetime
+
+
 
 # midi libs
 import mido
@@ -16,7 +19,7 @@ SCENES = ["song","chain","phrase","config"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F# ','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
-MAX_CHANNELS = 6
+MAX_CHANNELS = 8
 MAX_MIDI = 128
 MAX_SONG_STEPS = 16
 MAX_CHAIN_STEPS = 16
@@ -80,6 +83,51 @@ config_data = []
 config=  [[0x00,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
 config_data.append(config)
 
+def load_state():
+    
+    global song_data
+    global chain_data
+    global phrase_data
+
+    save_file_name = None
+    has_load_argument = False
+
+    try:
+        arguments = sys.argv
+        if arguments[1] == "-load":
+            has_load_argument = True
+            save_file_name = arguments[2]
+        print("LOADING...")
+           # Load the JSON file back as a dictionary
+        with open(f"{save_file_name}", "r") as fp:
+            loaded_data = json.load(fp)
+
+            song_data = loaded_data[0]
+            chain_data = loaded_data[1]
+            phrase_data = loaded_data[2]
+    except:
+        if has_load_argument:
+            print("File not found")
+        else:
+            print("not loading")
+
+ 
+def save_state():
+
+    save_state_data = []
+
+    save_state_data.append(song_data)
+    save_state_data.append(chain_data)
+    save_state_data.append(phrase_data)
+
+    now = datetime.now()
+    formatted_date = f"{now:%y%m%d-%H-%M}"
+    print(formatted_date)
+
+    with open(f"{formatted_date}.json", "w") as fp:
+        json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+    
+
 def updateInput(scr,data,max_column,max_row):
     global song_step
     global chain_step
@@ -93,7 +141,6 @@ def updateInput(scr,data,max_column,max_row):
     global current_config
     global active_data
     
-
     try:
         key = scr.getkey()
     except:
@@ -153,6 +200,8 @@ def updateInput(scr,data,max_column,max_row):
         current_notes = [None for _ in range(MAX_CHANNELS)]
         last_notes = [None for _ in range(MAX_CHANNELS)]
     
+    elif key == "s":
+        save_state()
 
     # MODIFY DATA
     elif key == "KEY_SR":
@@ -376,6 +425,8 @@ def main(stdscr):
     global outport
     outport = None
 
+    load_state()
+
     while 1:
 
         if outport == None:
@@ -403,7 +454,7 @@ def main(stdscr):
                 
                 # DATA
                 channels = MAX_CHANNELS
-                steps = 16
+                steps = MAX_SONG_STEPS
                 updateInput(stdscr,song_data,channels,steps)
                 drawColumNumbers(stdscr)
                 drawData(stdscr,song_data,channels,steps,render_style='int')
@@ -416,7 +467,7 @@ def main(stdscr):
 
                 # DATA
                 channels = 2
-                steps = 16
+                steps = MAX_CHAIN_STEPS
                 updateInput(stdscr,chain_data,channels,steps)
                 drawColumNumbers(stdscr)
                 drawData(stdscr,chain_data,channels,steps,render_style='int')
@@ -429,7 +480,7 @@ def main(stdscr):
 
                 # DATA
                 channels = 2
-                steps = 16
+                steps = MAX_PHRASE_STEPS
                 updateInput(stdscr,phrase_data,channels,steps)
                 drawColumNumbers(stdscr)
                 drawData(stdscr,phrase_data,channels,steps,render_style='tet')
