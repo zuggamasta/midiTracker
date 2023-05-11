@@ -71,10 +71,8 @@ Use the space key to stop all playing midi channels and notes. This also restart
 ### Quitting
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
-### Diagrams to keep my work organised
-![data diagram](/Documentation/diagram_230501.png)
 
-# This tool is in its prototype phase
+### ⚠️ This tool is in its prototype phase ⚠️
 
 ### python modules used:
 - MIDO for easy midi objects - https://github.com/mido/mido
