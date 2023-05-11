@@ -79,4 +79,4 @@ process can only be closed by the 'q' key, if there is still a "note_off" messag
 ### python modules used:
 - MIDO for easy midi objects - https://github.com/mido/mido
 - rtmidi for python - https://github.com/superquadratic/rtmidi-python
-- curses for Terminal UI - 
+- curses for Terminal UI - https://docs.python.org/3/howto/curses.html
