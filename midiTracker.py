@@ -15,8 +15,8 @@ import curses
 from curses import wrapper
 
 #CONSTANTS
-SCENES = ["song","chain","phrase","config"]
-NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F# ','G ','G#','A ','Bb','B ' ]
+SCENES = ["SONG","CHAIN","PHRASE","CONFIG"]
+NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
@@ -25,7 +25,7 @@ MAX_SONG_STEPS = 16
 MAX_CHAIN_STEPS = 16
 MAX_PHRASE_STEPS = 16
 
-SUB_STEPS = 8
+SUB_STEPS = 64
 
 sub_step = 0
 
@@ -97,19 +97,20 @@ def load_state():
         if arguments[1] == "-load":
             has_load_argument = True
             save_file_name = arguments[2]
-        print("LOADING...")
+        print("  LOADING...       ")
            # Load the JSON file back as a dictionary
         with open(f"{save_file_name}", "r") as fp:
             loaded_data = json.load(fp)
+
 
             song_data = loaded_data[0]
             chain_data = loaded_data[1]
             phrase_data = loaded_data[2]
     except:
         if has_load_argument:
-            print("File not found")
+            print("  File not found")
         else:
-            print("not loading")
+            print("  not loading   ")
 
  
 def save_state():
@@ -121,7 +122,7 @@ def save_state():
     save_state_data.append(phrase_data)
 
     now = datetime.now()
-    formatted_date = f"{now:%y%m%d-%H-%M}"
+    formatted_date = f"  {now:%y%m%d-%H-%M}"
     print(formatted_date)
 
     with open(f"{formatted_date}.json", "w") as fp:
@@ -438,9 +439,9 @@ def main(stdscr):
 
         stdscr.addstr(0,13,f"{available_ports[0]}")
 
-        stdscr.addstr(19,2,f"song_step:  {song_step:02}",curses.A_REVERSE)
-        stdscr.addstr(20,2,f"chain_step: {chain_step:02}",curses.A_REVERSE)
-        stdscr.addstr(21,2,f"phrase_step:{phrase_step:02}",curses.A_REVERSE)
+        stdscr.addstr(5,28,f"song_step:  {song_step:02}",curses.A_REVERSE)
+        stdscr.addstr(6,28,f"chain_step: {chain_step:02}",curses.A_REVERSE)
+        stdscr.addstr(7,28,f"phrase_step:{phrase_step:02}",curses.A_REVERSE)
 
         match current_scene:
             
