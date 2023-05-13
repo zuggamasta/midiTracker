@@ -2,15 +2,12 @@
 import sys
 import time
 import json
+
 from datetime import datetime
 
-
-
-# midi libs
 import mido
 from mido import Message
 
-# UI libs
 import curses
 from curses import wrapper
 
@@ -21,24 +18,18 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 MAX_MIDI = 128
-MAX_SONG_STEPS = 16
-MAX_CHAIN_STEPS = 16
-MAX_PHRASE_STEPS = 16
-
+MAX_SONG_STEPS = 8
+MAX_CHAIN_STEPS = 8
+MAX_PHRASE_STEPS = 8
+MAX_CONFIG_STEPS = 4
+INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
 SUB_STEPS = 64
 
 sub_step = 0
-
 time_step = 0
-
-
 cursor = [0,0]
-
 is_song_playing = True
-
 bpm = 105
-
-# scene infos
 current_scene = 0
 
 active_data = 0 
@@ -46,7 +37,6 @@ active_chain = []
 active_phrase = []
 
 midi_messages = [None for _ in range(MAX_CHANNELS)]
-
 
 song_step = 0
 chain_step = 0
@@ -67,8 +57,8 @@ chain1 = [[1 for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] # phrase | tran
 chain_data.append(chain1)
 
 
-current_phrase = 0
 # PHRASES
+current_phrase = 0
 phrase_data = []
 phrase0 = [[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] # note | CMD
 phrase_data.append(phrase0)
@@ -102,7 +92,6 @@ def load_state():
         with open(f"{save_file_name}", "r") as fp:
             loaded_data = json.load(fp)
 
-
             song_data = loaded_data[0]
             chain_data = loaded_data[1]
             phrase_data = loaded_data[2]
@@ -122,7 +111,7 @@ def save_state():
     save_state_data.append(phrase_data)
 
     now = datetime.now()
-    formatted_date = f"  {now:%y%m%d-%H-%M}"
+    formatted_date = f"{now:%y%m%d-%H-%M}"
     print(formatted_date)
 
     with open(f"{formatted_date}.json", "w") as fp:
@@ -163,6 +152,15 @@ def updateInput(scr,data,max_column,max_row):
         current_scene += 1
     elif key == "kLFT5":
         current_scene -= 1
+
+    if key == "1":
+        current_scene = 0
+    elif key == "2":
+        current_scene = 1
+    elif key == "3":
+        current_scene = 2
+    elif key == "4":
+        current_scene = 3
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == "kUP5":
@@ -372,8 +370,6 @@ def save_note(note, channel):
     current_notes[channel] = note
     last_notes[channel] = note
 
-
-
 def play_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
@@ -384,7 +380,6 @@ def stop_notes(notes):
         if notes[channel] != None:
             outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
 
-
 def play_rest():
     pass
 
@@ -393,40 +388,60 @@ def panic():
         for note in range(MAX_MIDI):
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
-
-
-
 # NOTE: Playback code ends here
 
-def drawColumNumbers(scr):
-    header_win = curses.newwin(17,2,3,0)
-    for frame in range(16):
+def drawColumNumbers(scr,columns):
+    header_win = curses.newwin(columns+1,2,3,0)
+    for frame in range(columns):
         header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE)
 
     scr.refresh()
     header_win.refresh()
 
-def main(stdscr):
-    global time_step
-    global RED
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-    RED = curses.color_pair(1)
-    global GREEN
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    GREEN = curses.color_pair(2)
+def drawIntro(scr):
+    HEIGHT,WIDTH = scr.getmaxyx()
+    scr.attron(PRIMARY)
 
-    stdscr.attron(GREEN)
+    pad = curses.newpad(16,68)
+    ANIMATION_START = 16
+    pad.attron(PRIMARY)
+
+
+
+    pad.addstr(INTRO_TEXT)
+    for i in range(ANIMATION_START):
+        pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
+        scr.addstr(0,0,"v0.1")
+        scr.refresh()
+        time.sleep(0.033)
+    time.sleep(1.033)
+    scr.clear()
+
+def setupColors():
+    global PRIMARY
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    PRIMARY = curses.color_pair(1)
+
+    global SECONDARY
+    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    SECONDARY = curses.color_pair(2)
+    
+    global TERTIARY
+    curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    TERTIARY = curses.color_pair(3)
+
+def main(stdscr):
+
+    setupColors()
+    global outport
+    outport = None
 
     # CURSES SETUP
     stdscr.keypad(True)
     stdscr.nodelay(True)
-    #stdscr.timeout(150)
-    # HIDE CURSES CURSOR
-    curses.curs_set(0)
-    stdscr.addstr("aMidiTracker v.01 ")
+    curses.curs_set(0)      # HIDE CURSES CURSOR
 
-    global outport
-    outport = None
+    drawIntro(stdscr)
 
     load_state()
 
@@ -434,14 +449,18 @@ def main(stdscr):
 
         if outport == None:
             available_ports = mido.get_input_names()
-
+            available_ports = [None,None]
             outport = mido.open_output()
+            pass
+        
 
         stdscr.addstr(0,13,f"{available_ports[0]}")
-
-        stdscr.addstr(5,28,f"song_step:  {song_step:02}",curses.A_REVERSE)
-        stdscr.addstr(6,28,f"chain_step: {chain_step:02}",curses.A_REVERSE)
-        stdscr.addstr(7,28,f"phrase_step:{phrase_step:02}",curses.A_REVERSE)
+        
+        stdscr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
+        stdscr.addstr(5,28,f"song_step:  {song_step:02}")
+        stdscr.addstr(6,28,f"chain_step: {chain_step:02}")
+        stdscr.addstr(7,28,f"phrase_step:{phrase_step:02}")
+        stdscr.attroff(PRIMARY | curses.A_STANDOUT)
 
         match current_scene:
             
@@ -452,14 +471,11 @@ def main(stdscr):
                 stdscr.addstr(1,2,f"{SCENES[current_scene]} {current_song:02}      ")
                 stdscr.addstr(2,2,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE)
                
-
-
-                
                 # DATA
                 channels = MAX_CHANNELS
                 steps = MAX_SONG_STEPS
                 updateInput(stdscr,song_data,channels,steps)
-                drawColumNumbers(stdscr)
+                drawColumNumbers(stdscr,steps)
                 drawData(stdscr,song_data,channels,steps,render_style='int')
             case 1:
                 # CHAIN VIEW
@@ -472,7 +488,7 @@ def main(stdscr):
                 channels = 2
                 steps = MAX_CHAIN_STEPS
                 updateInput(stdscr,chain_data,channels,steps)
-                drawColumNumbers(stdscr)
+                drawColumNumbers(stdscr,steps)
                 drawData(stdscr,chain_data,channels,steps,render_style='int')
             case 2:
                 # PHRASE VIEW
@@ -485,7 +501,7 @@ def main(stdscr):
                 channels = 2
                 steps = MAX_PHRASE_STEPS
                 updateInput(stdscr,phrase_data,channels,steps)
-                drawColumNumbers(stdscr)
+                drawColumNumbers(stdscr,steps)
                 drawData(stdscr,phrase_data,channels,steps,render_style='tet')
             case 3:
                 # CONFIG VIEW
@@ -493,16 +509,12 @@ def main(stdscr):
                 stdscr.addstr(1,2,f"{SCENES[current_scene]}    ")
                 stdscr.addstr(2,2,f"Val Key",curses.A_REVERSE)
 
-                # clear line
-                stdscr.addstr("                                      ")
-                # clear vertical line
-                for i in range(16):
-                    stdscr.addstr(i+3,0,"  ")
 
                 # DATA
                 channels = 2
-                steps = 4
+                steps = MAX_CONFIG_STEPS
                 updateInput(stdscr,config_data,channels,steps)
+                drawColumNumbers(stdscr,steps)
                 drawData(stdscr,config_data,channels,steps,render_style='hex')
                 pass
 
@@ -513,8 +525,6 @@ def main(stdscr):
         if is_song_playing:
             play_song(0)
         
-        
-
         stdscr.refresh()
 
 
