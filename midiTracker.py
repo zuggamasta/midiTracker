@@ -18,18 +18,20 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 MAX_MIDI = 128
-MAX_SONG_STEPS = 8
-MAX_CHAIN_STEPS = 8
-MAX_PHRASE_STEPS = 8
+MAX_SONG_STEPS = 16
+MAX_CHAIN_STEPS = 16
+MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
-SUB_STEPS = 64
+SUB_STEPS = 3
+MIDI_PORT = 0
+
 
 sub_step = 0
 time_step = 0
 cursor = [0,0]
 is_song_playing = True
-bpm = 105
+bpm = 120
 current_scene = 0
 
 active_data = 0 
@@ -70,10 +72,10 @@ last_notes = [None for _ in range(MAX_CHANNELS)]
 # CONFIG
 current_config = 0
 config_data = []
-config=  [[0x00,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
+config=  [[0x01,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
 config_data.append(config)
 
-def load_state():
+def load_state(autoload):
     
     global song_data
     global chain_data
@@ -81,6 +83,15 @@ def load_state():
 
     save_file_name = None
     has_load_argument = False
+
+    if autoload:
+        with open(f"savestate.json", "r") as fp:
+            loaded_data = json.load(fp)
+
+            song_data = loaded_data[0]
+            chain_data = loaded_data[1]
+            phrase_data = loaded_data[2]
+
 
     try:
         arguments = sys.argv
@@ -117,6 +128,8 @@ def save_state():
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
     
+    
+
 
 def updateInput(scr,data,max_column,max_row):
     global song_step
@@ -242,6 +255,13 @@ def updateInput(scr,data,max_column,max_row):
     # QUIT APPLICATION
 
     elif key == "q":
+            save_state_data = []
+
+            save_state_data.append(song_data)
+            save_state_data.append(chain_data)
+            save_state_data.append(phrase_data)
+            with open(f"savestate.json", "w") as fp:
+                json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
             sys.exit()
     else:
         pass
@@ -443,18 +463,22 @@ def main(stdscr):
 
     drawIntro(stdscr)
 
-    load_state()
+    load_state(autoload=True)
 
     while 1:
-
-        if outport == None:
-            available_ports = mido.get_input_names()
-            available_ports = [None,None]
-            outport = mido.open_output()
-            pass
+        stdscr.clear()
         
 
-        stdscr.addstr(0,13,f"{available_ports[0]}")
+        if outport == None or MIDI_PORT != config_data[0][0][0]:
+            MIDI_PORT = config_data[0][0][0]
+            available_ports = mido.get_input_names()
+            #available_ports = [None,None]
+            outport = mido.open_output(available_ports[MIDI_PORT])
+            
+            stdscr.clear()
+        
+
+        stdscr.addstr(0,2,f"{available_ports[MIDI_PORT]}")
         
         stdscr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
         stdscr.addstr(5,28,f"song_step:  {song_step:02}")
@@ -507,7 +531,7 @@ def main(stdscr):
                 # CONFIG VIEW
                 # Header
                 stdscr.addstr(1,2,f"{SCENES[current_scene]}    ")
-                stdscr.addstr(2,2,f"Val Key",curses.A_REVERSE)
+                stdscr.addstr(2,2,f"Val Key            ",curses.A_REVERSE)
 
 
                 # DATA
