@@ -23,6 +23,10 @@ aMidiTracker is a small tracker that sequences notes in a nested vertical layout
 
 I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
 
+
+### ⚠️ This tool is in its prototype phase ⚠️
+
+
 ## Screenshots
 
 ![screenshot](/Documentation/Screenshot_2023-05-02.png)
@@ -32,9 +36,13 @@ I am developing this tool for myself, but I'll try to make it accessible to othe
 
 I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
-## Documentation
+### python modules used:
+- MIDO for easy midi objects - https://github.com/mido/mido
+- rtmidi for python - https://github.com/superquadratic/rtmidi-python
+- curses for Terminal UI - https://docs.python.org/3/howto/curses.html
 
 
+## How To
 
 
 ### Keyboard Controls:
@@ -79,10 +87,5 @@ Use the space key to stop all playing midi channels and notes. This also restart
 ### Quitting
 process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
 
-
-### ⚠️ This tool is in its prototype phase ⚠️
-
-### python modules used:
-- MIDO for easy midi objects - https://github.com/mido/mido
-- rtmidi for python - https://github.com/superquadratic/rtmidi-python
-- curses for Terminal UI - https://docs.python.org/3/howto/curses.html
+## Thank you
+Thank you to everyone helping and making all of this possible. I'll take care and list you all when there is a little more time to do so.
