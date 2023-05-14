@@ -23,9 +23,10 @@ MAX_CHAIN_STEPS = 16
 MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
-SUB_STEPS = 3
+SUB_STEPS = 16
 MIDI_PORT = 0
 
+INFO_STEP_Y, INFO_STEP_X = 5, 28
 
 sub_step = 0
 time_step = 0
@@ -72,7 +73,7 @@ last_notes = [None for _ in range(MAX_CHANNELS)]
 # CONFIG
 current_config = 0
 config_data = []
-config=  [[0x01,None,0xff,0xab],[0x00,None,0xff,0xab] ]  
+config=  [[0x01,None,0xff,0xab],["Midi Device",None,0xff,0xab] ]  
 config_data.append(config)
 
 def load_state(autoload):
@@ -202,6 +203,9 @@ def updateInput(scr,data,max_column,max_row):
             if current_phrase < 0:
                 current_phrase = 0
  
+    elif key == "w":
+        panic()
+
     elif key == " ":
         panic()
         song_step = 0
@@ -301,9 +305,9 @@ def updateInput(scr,data,max_column,max_row):
 def drawData(scr,data,max_column,max_row,render_style):
     data_win = curses.newwin(16,MAX_CHANNELS*4+1,3,2)
 
-    for column in range(max_row):
-        for row in range(max_column):
-            slot = data[active_data][row][column]
+    for row in range(max_row):
+        for column in range(max_column):
+            slot = data[active_data][column][row]
             note = 0x0
             render_slot = ""
             if slot == None:
@@ -316,11 +320,13 @@ def drawData(scr,data,max_column,max_row,render_style):
                     render_slot = f" {slot:02x} "
                 elif render_style == 'int':
                     render_slot = f" {slot:02} "
+                elif render_style == 'str':
+                    render_slot = f" {slot} "
 
-            if column == cursor[1] and row == cursor[0]:
-                data_win.addstr(column,row*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
+            if row == cursor[1] and column == cursor[0]:
+                data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
             else:
-                data_win.addstr(column,row*SLOT_WIDTH,render_slot, curses.A_BOLD)
+                data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
 
     scr.refresh()
     data_win.refresh()
@@ -336,17 +342,19 @@ def play_song(song):
     global current_notes
     global sub_step
 
+    if(sub_step == 0):
+        for song_channel in range(MAX_CHANNELS):
+            
+            if song_step < MAX_SONG_STEPS:
+                active_chain_no = song_data[song][song_channel][song_step]
+                if active_chain_no !=  None:
+                    play_chain(active_chain_no,song_channel)
+                else:
+                    pass
+        play_notes(current_notes)
 
-    for song_channel in range(MAX_CHANNELS):
-        
-        if song_step < MAX_SONG_STEPS:
-            active_chain_no = song_data[song][song_channel][song_step]
-            if active_chain_no !=  None:
-                play_chain(active_chain_no,song_channel)
-            else:
-                pass
-    play_notes(current_notes)
     time.sleep(60/bpm/4/SUB_STEPS)
+    
     sub_step += 1
 
     if(sub_step > SUB_STEPS):
@@ -402,7 +410,7 @@ def stop_notes(notes):
 
 def play_rest():
     pass
-
+    
 def panic():
     for channel in range(MAX_CHANNELS):
         for note in range(MAX_MIDI):
@@ -481,9 +489,10 @@ def main(stdscr):
         stdscr.addstr(0,2,f"{available_ports[MIDI_PORT]}")
         
         stdscr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
-        stdscr.addstr(5,28,f"song_step:  {song_step:02}")
-        stdscr.addstr(6,28,f"chain_step: {chain_step:02}")
-        stdscr.addstr(7,28,f"phrase_step:{phrase_step:02}")
+        stdscr.addstr(INFO_STEP_Y+0,INFO_STEP_X,f"song_step:  {song_step:02}")
+        stdscr.addstr(INFO_STEP_Y+1,INFO_STEP_X,f"chain_step: {chain_step:02}")
+        stdscr.addstr(INFO_STEP_Y+2,INFO_STEP_X,f"phrase_step:{phrase_step:02}")
+        
         stdscr.attroff(PRIMARY | curses.A_STANDOUT)
 
         match current_scene:
@@ -539,7 +548,7 @@ def main(stdscr):
                 steps = MAX_CONFIG_STEPS
                 updateInput(stdscr,config_data,channels,steps)
                 drawColumNumbers(stdscr,steps)
-                drawData(stdscr,config_data,channels,steps,render_style='hex')
+                drawData(stdscr,config_data,channels,steps,render_style='str')
                 pass
 
             case _:
