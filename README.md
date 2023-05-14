@@ -26,13 +26,7 @@ I am developing this tool for myself, but I'll try to make it accessible to othe
 
 ### ⚠️ This tool is in its prototype phase ⚠️
 
-
-## Screenshots
-
-![screenshot](/Documentation/Screenshot_2023-05-02.png)
-
-
-## Prerequisites
+## Running midiTracker
 
 I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
@@ -40,9 +34,6 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 - MIDO for easy midi objects - https://github.com/mido/mido
 - rtmidi for python - https://github.com/superquadratic/rtmidi-python
 - curses for Terminal UI - https://docs.python.org/3/howto/curses.html
-
-
-## How To
 
 
 ### Keyboard Controls:
