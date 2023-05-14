@@ -32,7 +32,7 @@ I am developing this tool for myself, but I'll try to make it accessible to othe
 
 I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
-## Documentation / Issues
+## Documentation
 
 
 
@@ -50,12 +50,17 @@ Shift + *↑* : Up Arrow: +1 / Semitone
 
 
 
-Ctrl + *→* :  Next Scene
+1 : Song View
 
-Ctrl + *←* :  Next Scene
+2 : Chain View
 
+3 : Phrase View
 
-Space : Panic / Restart
+4 : Config View
+
+w : Panic (stops all Midi Messages)
+
+Space : Panic / Restart Song
 
 s : Save
 
@@ -63,6 +68,9 @@ q : Quit
 
 
 ### Saving / Loading
+
+Miditracker automatically saves your file when you quit a session with the 'q' button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
+
 You can save the current state of your file with the 's' button. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use ```miditracker.py -load yoursavefile.json```to do so.
 
 ### PANIC / STOP ALL NOTES / RESTART
