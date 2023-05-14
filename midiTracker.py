@@ -263,6 +263,8 @@ def updateInput(scr,data,max_column,max_row):
     # QUIT APPLICATION
 
     elif key == "q":
+            panic()
+
             save_state_data = []
 
             save_state_data.append(song_data)
@@ -270,6 +272,7 @@ def updateInput(scr,data,max_column,max_row):
             save_state_data.append(phrase_data)
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+            
             sys.exit()
     else:
         pass
