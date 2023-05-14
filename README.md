@@ -68,15 +68,17 @@ q : Quit
 
 ### Saving / Loading
 
-Miditracker automatically saves your file when you quit a session with the 'q' button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
+Miditracker automatically saves your file when you quit a session with the ```'q'``` button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
 
-You can save the current state of your file with the 's' button. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use ```miditracker.py -load yoursavefile.json```to do so.
+You can save the current state of your file with the ```'s'``` button. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use:
+
+```miditracker.py -load yoursavefile.json```
 
 ### PANIC / STOP ALL NOTES / RESTART
-Use the space key to stop all playing midi channels and notes. This also restarts playback.
+Use the ```space``` key to stop all playing midi channels and notes. This also restarts playback.
 
 ### Quitting
-process can be closed by the 'q' key,
+process can be closed by the ```'q'``` key,
 
 ## Thank you
 Thank you to everyone helping and making all of this possible. I'll take care and list you all when there is a little more time to do so.
