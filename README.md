@@ -85,7 +85,7 @@ You can save the current state of your file with the 's' button. Files will have
 Use the space key to stop all playing midi channels and notes. This also restarts playback.
 
 ### Quitting
-process can only be closed by the 'q' key, if there is still a "note_off" message to be sent some channles might get stuck in a "note_on" and sustain forever
+process can be closed by the 'q' key,
 
 ## Thank you
 Thank you to everyone helping and making all of this possible. I'll take care and list you all when there is a little more time to do so.
