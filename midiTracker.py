@@ -18,12 +18,12 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 MAX_MIDI = 128
-MAX_SONG_STEPS = 16
-MAX_CHAIN_STEPS = 16
+MAX_SONG_STEPS = 4
+MAX_CHAIN_STEPS = 1
 MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
-SUB_STEPS = 16
+SUB_STEPS = 4
 MIDI_PORT = 0
 
 INFO_STEP_Y, INFO_STEP_X = 5, 28
@@ -32,9 +32,8 @@ sub_step = 0
 time_step = 0
 cursor = [0,0]
 is_song_playing = True
-bpm = 120
+bpm = 156/2
 current_scene = 0
-
 active_data = 0 
 active_chain = []
 active_phrase = []
@@ -73,8 +72,13 @@ last_notes = [None for _ in range(MAX_CHANNELS)]
 # CONFIG
 current_config = 0
 config_data = []
-config=  [[0x01,None,0xff,0xab],["Midi Device",None,0xff,0xab] ]  
+config=  [[0x01,156/2,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
 config_data.append(config)
+
+def wait(delay):
+    end_time = time.time() + delay
+    while end_time > time.time():
+        continue
 
 def load_state(autoload):
     
@@ -354,12 +358,14 @@ def play_song(song):
         play_notes(current_notes)
 
     time.sleep(60/bpm/4/SUB_STEPS)
-    
+    #wait(60/bpm/4/SUB_STEPS)
+
     sub_step += 1
 
     if(sub_step > SUB_STEPS):
         stop_notes(current_notes)
         phrase_step += 1 
+        current_notes = [None for _ in range(MAX_CHANNELS)]
         sub_step = 0
 
 
@@ -407,6 +413,7 @@ def stop_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
             outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
+        
 
 def play_rest():
     pass
@@ -461,6 +468,8 @@ def setupColors():
 def main(stdscr):
 
     setupColors()
+
+    global bpm
     global outport
     outport = None
 
@@ -474,7 +483,6 @@ def main(stdscr):
     load_state(autoload=True)
 
     while 1:
-        stdscr.clear()
         
 
         if outport == None or MIDI_PORT != config_data[0][0][0]:
@@ -484,9 +492,12 @@ def main(stdscr):
             outport = mido.open_output(available_ports[MIDI_PORT])
             
             stdscr.clear()
+
+        if bpm != config_data[0][0][1]:
+            bpm = config_data[0][0][1]*2
         
 
-        stdscr.addstr(0,2,f"{available_ports[MIDI_PORT]}")
+        stdscr.addstr(0,2,f"BPM:{bpm} | Device:{available_ports[MIDI_PORT]}")
         
         stdscr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
         stdscr.addstr(INFO_STEP_Y+0,INFO_STEP_X,f"song_step:  {song_step:02}")
