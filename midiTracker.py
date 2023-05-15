@@ -26,14 +26,15 @@ INTRO_TEXT = ("                                        oo          dP    oo\n   
 SUB_STEPS = 4
 MIDI_PORT = 0
 
-INFO_STEP_Y, INFO_STEP_X = 5, 28
+STEP_INFO_Y, STEP_INFO_X = 5, 28
+TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
 
 sub_step = 0
 time_step = 0
 cursor = [0,0]
 is_song_playing = True
-bpm = 156/2
-current_scene = 0
+bpm = 90
+current_screen = 0
 active_data = 0 
 active_chain = []
 active_phrase = []
@@ -75,10 +76,6 @@ config_data = []
 config=  [[0x01,156/2,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
 config_data.append(config)
 
-def wait(delay):
-    end_time = time.time() + delay
-    while end_time > time.time():
-        continue
 
 def load_state(autoload):
     
@@ -136,13 +133,12 @@ def save_state():
     
 
 
-def updateInput(scr,data,max_column,max_row):
+def update_input(scr,data,max_column,max_row):
     global song_step
     global chain_step
     global phrase_step
-
     global cursor
-    global current_scene
+    global current_screen
     global current_song
     global current_chain
     global current_phrase
@@ -155,54 +151,54 @@ def updateInput(scr,data,max_column,max_row):
         key = None
 
 
-    if current_scene == 0:
+    if current_screen == 0:
         active_data = current_song
-    elif current_scene == 1:
+    elif current_screen == 1:
         active_data = current_chain
-    elif current_scene == 2:
+    elif current_screen == 2:
         active_data = current_phrase
-    elif current_scene == 3:
+    elif current_screen == 3:
         active_data == current_config
 
 
     # SWITCH SCENE 
     if key == "kRIT5":
-        current_scene += 1
+        current_screen += 1
     elif key == "kLFT5":
-        current_scene -= 1
+        current_screen -= 1
 
     if key == "1":
-        current_scene = 0
+        current_screen = 0
     elif key == "2":
-        current_scene = 1
+        current_screen = 1
     elif key == "3":
-        current_scene = 2
+        current_screen = 2
     elif key == "4":
-        current_scene = 3
+        current_screen = 3
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == "kUP5":
         # CHAIN SCENE
-        if current_scene == 1:
+        if current_screen == 1:
             if current_chain+2 > len(chain_data) :
                 chain_data.append([[None for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)])
             current_chain += 1
         # PHRASE SCENE
-        if current_scene == 2:
+        if current_screen == 2:
             if current_phrase+2 > len(phrase_data) :
                 phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
     elif key == "kDN5":
         # CHAIN SCENE
-        if current_scene == 1:
+        if current_screen == 1:
             current_chain -= 1
             if current_chain < 0:
                 current_chain = 0
 
 
         # PHRASE SCENE
-        if current_scene == 2:
+        if current_screen == 2:
             current_phrase -= 1
             if current_phrase < 0:
                 current_phrase = 0
@@ -278,10 +274,10 @@ def updateInput(scr,data,max_column,max_row):
         pass
     
     # WRAP SCENE AROUND
-    if current_scene > 3:
-        current_scene = 0
-    if current_scene < 0:
-        current_scene = 3
+    if current_screen > 3:
+        current_screen = 0
+    if current_screen < 0:
+        current_screen = 3
 
     
     # WRAP CURSOR AROUND
@@ -294,7 +290,7 @@ def updateInput(scr,data,max_column,max_row):
     if cursor[1] >= max_row:
         cursor[1] = 0
 
-    if current_scene == 3:
+    if current_screen == 3:
         active_data = 0
         current_config = 0
 
@@ -304,12 +300,12 @@ def updateInput(scr,data,max_column,max_row):
         if data[active_data][cursor[0]][cursor[1]] > MAX_MIDI-1:
             data[active_data][cursor[0]][cursor[1]] = 0
 
-
+    
     scr.refresh()
 
     return cursor
 
-def drawData(scr,data,max_column,max_row,render_style):
+def draw_data(scr,data,max_column,max_row,render_style):
     data_win = curses.newwin(16,MAX_CHANNELS*4+1,3,2)
 
     for row in range(max_row):
@@ -361,7 +357,6 @@ def play_song(song):
         play_notes(current_notes)
 
     time.sleep(60/bpm/4/SUB_STEPS)
-    #wait(60/bpm/4/SUB_STEPS)
 
     sub_step += 1
 
@@ -428,7 +423,7 @@ def panic():
 
 # NOTE: Playback code ends here
 
-def drawColumNumbers(scr,columns):
+def draw_column_no(scr,columns):
     header_win = curses.newwin(columns+1,2,3,0)
     for frame in range(columns):
         header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE)
@@ -436,7 +431,7 @@ def drawColumNumbers(scr,columns):
     scr.refresh()
     header_win.refresh()
 
-def drawIntro(scr):
+def draw_intro(scr):
     HEIGHT,WIDTH = scr.getmaxyx()
     scr.attron(PRIMARY)
 
@@ -455,7 +450,15 @@ def drawIntro(scr):
     time.sleep(1.033)
     scr.clear()
 
-def setupColors():
+def draw_step_info(scr,y_pos,x_pos):
+        scr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
+        scr.addstr(y_pos+0,x_pos,f"song_step:  {song_step:02}")
+        scr.addstr(y_pos+1,x_pos,f"chain_step: {chain_step:02}")
+        scr.addstr(y_pos+2,x_pos,f"phrase_step:{phrase_step:02}")
+        
+        scr.attroff(PRIMARY | curses.A_STANDOUT)
+
+def setup_colors():
     global PRIMARY
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     PRIMARY = curses.color_pair(1)
@@ -470,108 +473,99 @@ def setupColors():
 
 def main(stdscr):
 
-    setupColors()
-
     global bpm
     global outport
     outport = None
 
     # CURSES SETUP
-    stdscr.keypad(True)
-    stdscr.nodelay(True)
-    curses.curs_set(0)      # HIDE CURSES CURSOR
+    setup_colors()
+    stdscr.keypad(True)     # Get better input names
+    stdscr.nodelay(True)    # Don't wait for input, don't delay it
+    curses.curs_set(0)      # Hide CLI cursor, this project uses a custom cursor
 
-    drawIntro(stdscr)
+    draw_intro(stdscr)      # Play animated Intro
 
-    load_state(autoload=True)
+    load_state(autoload=True)   # Load 'savestate.json'
 
-    while 1:
+    while True:
         
-
+        # Make sure to setup a Midiport
         if outport == None or MIDI_PORT != config_data[0][0][0]:
             MIDI_PORT = config_data[0][0][0]
-            available_ports = mido.get_input_names()
-            #available_ports = [None,None]
-            outport = mido.open_output(available_ports[MIDI_PORT])
+            try:
+                available_ports = mido.get_input_names()
+                outport = mido.open_output(available_ports[MIDI_PORT])
+            
+            except:
+                outport = None
             
             stdscr.clear()
 
-        if bpm != config_data[0][0][1]:
-            bpm = config_data[0][0][1]*2
+        # draw global infos, these are always on screen.
+        stdscr.addstr(0,2,f"BPM:{bpm} | Device:{available_ports[MIDI_PORT]}")   # BPM and Midi port
         
+        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          # Playback info of song, chain and phrase step
 
-        stdscr.addstr(0,2,f"BPM:{bpm} | Device:{available_ports[MIDI_PORT]}")
-        
-        stdscr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
-        stdscr.addstr(INFO_STEP_Y+0,INFO_STEP_X,f"song_step:  {song_step:02}")
-        stdscr.addstr(INFO_STEP_Y+1,INFO_STEP_X,f"chain_step: {chain_step:02}")
-        stdscr.addstr(INFO_STEP_Y+2,INFO_STEP_X,f"phrase_step:{phrase_step:02}")
-        
-        stdscr.attroff(PRIMARY | curses.A_STANDOUT)
 
-        match current_scene:
+        # different screens are selected and only the current screen is drawn
+        if current_screen == 0:
+            # SONG VIEW
+            # Header
             
-            case 0:
-                # SONG VIEW
-                # Header
-                
-                stdscr.addstr(1,2,f"{SCENES[current_scene]} {current_song:02}      ")
-                stdscr.addstr(2,2,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE)
-               
-                # DATA
-                channels = MAX_CHANNELS
-                steps = MAX_SONG_STEPS
-                updateInput(stdscr,song_data,channels,steps)
-                drawColumNumbers(stdscr,steps)
-                drawData(stdscr,song_data,channels,steps,render_style='int')
-            case 1:
-                # CHAIN VIEW
-                # Header
-                stdscr.addstr(1,2,f"{SCENES[current_scene]} {current_chain:02}      ")
-                stdscr.addstr(2,2,f"PhrsTrsp",curses.A_REVERSE)
-                stdscr.addstr("                          ")
-
-                # DATA
-                channels = 2
-                steps = MAX_CHAIN_STEPS
-                updateInput(stdscr,chain_data,channels,steps)
-                drawColumNumbers(stdscr,steps)
-                drawData(stdscr,chain_data,channels,steps,render_style='int')
-            case 2:
-                # PHRASE VIEW
-                # Header
-                stdscr.addstr(1,2,f"{SCENES[current_scene]} {current_phrase:02}      ")
-                stdscr.addstr(2,2,f"Note CMD",curses.A_REVERSE)
-                stdscr.addstr("                          ")
-
-                # DATA
-                channels = 2
-                steps = MAX_PHRASE_STEPS
-                updateInput(stdscr,phrase_data,channels,steps)
-                drawColumNumbers(stdscr,steps)
-                drawData(stdscr,phrase_data,channels,steps,render_style='tet')
-            case 3:
-                # CONFIG VIEW
-                # Header
-                stdscr.addstr(1,2,f"{SCENES[current_scene]}    ")
-                stdscr.addstr(2,2,f"Val Key            ",curses.A_REVERSE)
-
-
-                # DATA
-                channels = 2
-                steps = MAX_CONFIG_STEPS
-                updateInput(stdscr,config_data,channels,steps)
-                drawColumNumbers(stdscr,steps)
-                drawData(stdscr,config_data,channels,steps,render_style='str')
-                pass
-
-            case _:
+            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_song:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE)
             
-                pass
+            # DATA
+            channels = MAX_CHANNELS
+            steps = MAX_SONG_STEPS
+            update_input(stdscr,song_data,channels,steps)
+            draw_column_no(stdscr,steps)
+            draw_data(stdscr,song_data,channels,steps,render_style='int')
+        elif current_screen == 1:
+            # CHAIN VIEW
+            # Header
+            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_chain:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"PhrsTrsp",curses.A_REVERSE)
+            stdscr.addstr("                          ")
+
+            # DATA
+            channels = 2
+            steps = MAX_CHAIN_STEPS
+            update_input(stdscr,chain_data,channels,steps)
+            draw_column_no(stdscr,steps)
+            draw_data(stdscr,chain_data,channels,steps,render_style='int')
+        elif current_screen == 2:
+            # PHRASE VIEW
+            # Header
+            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_phrase:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note CMD",curses.A_REVERSE)
+            stdscr.addstr("                          ")
+
+            # DATA
+            channels = 2
+            steps = MAX_PHRASE_STEPS
+            update_input(stdscr,phrase_data,channels,steps)
+            draw_column_no(stdscr,steps)
+            draw_data(stdscr,phrase_data,channels,steps,render_style='tet')
+        elif current_screen == 3:
+            # CONFIG VIEW
+            # Header
+            stdscr.clear()
+            stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
+
+            # DATA
+            
+
+
+            pass
+
+        else:
+                # fallback in case a non available screen number gets selected error happens
+            pass
         
         if is_song_playing:
             play_song(0)
-        
+
         stdscr.refresh()
 
 
