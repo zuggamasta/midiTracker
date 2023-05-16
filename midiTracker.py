@@ -12,7 +12,7 @@ import curses
 from curses import wrapper
 
 #CONSTANTS
-SCENES = ["SONG","CHAIN","PHRASE","CONFIG"]
+SCENES = ["SONG","CHAIN","PHRASE","CONFIG","HELP"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
@@ -73,7 +73,7 @@ last_notes = [None for _ in range(MAX_CHANNELS)]
 # CONFIG
 current_config = 0
 config_data = []
-config=  [[0x01,156/2,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
+config=  [[0x01,120,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
 config_data.append(config)
 
 
@@ -150,7 +150,6 @@ def update_input(scr,data,max_column,max_row):
     except:
         key = None
 
-
     if current_screen == 0:
         active_data = current_song
     elif current_screen == 1:
@@ -160,13 +159,6 @@ def update_input(scr,data,max_column,max_row):
     elif current_screen == 3:
         active_data == current_config
 
-
-    # SWITCH SCENE 
-    if key == "kRIT5":
-        current_screen += 1
-    elif key == "kLFT5":
-        current_screen -= 1
-
     if key == "1":
         current_screen = 0
     elif key == "2":
@@ -175,6 +167,8 @@ def update_input(scr,data,max_column,max_row):
         current_screen = 2
     elif key == "4":
         current_screen = 3
+    elif key == "5":
+        current_screen = 4
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == "kUP5":
@@ -195,7 +189,6 @@ def update_input(scr,data,max_column,max_row):
             current_chain -= 1
             if current_chain < 0:
                 current_chain = 0
-
 
         # PHRASE SCENE
         if current_screen == 2:
@@ -273,12 +266,6 @@ def update_input(scr,data,max_column,max_row):
     else:
         pass
     
-    # WRAP SCENE AROUND
-    if current_screen > 3:
-        current_screen = 0
-    if current_screen < 0:
-        current_screen = 3
-
     
     # WRAP CURSOR AROUND
     if cursor[0] < 0:
@@ -306,7 +293,7 @@ def update_input(scr,data,max_column,max_row):
     return cursor
 
 def draw_data(scr,data,max_column,max_row,render_style):
-    data_win = curses.newwin(16,MAX_CHANNELS*4+1,3,2)
+    data_win = curses.newwin(max_row,max_column*4+2,3,2)
 
     for row in range(max_row):
         for column in range(max_column):
@@ -333,9 +320,6 @@ def draw_data(scr,data,max_column,max_row,render_style):
 
     scr.refresh()
     data_win.refresh()
-
-
-# NOTE: Playback code happens here
 
 def play_song(song):
     global song_step
@@ -411,7 +395,6 @@ def stop_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
             outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
-        
 
 def play_rest():
     pass
@@ -420,8 +403,6 @@ def panic():
     for channel in range(MAX_CHANNELS):
         for note in range(MAX_MIDI):
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
-
-# NOTE: Playback code ends here
 
 def draw_column_no(scr,columns):
     header_win = curses.newwin(columns+1,2,3,0)
@@ -433,18 +414,14 @@ def draw_column_no(scr,columns):
 
 def draw_intro(scr):
     HEIGHT,WIDTH = scr.getmaxyx()
-    scr.attron(PRIMARY)
 
     pad = curses.newpad(16,68)
     ANIMATION_START = 16
-    pad.attron(PRIMARY)
 
-
-
-    pad.addstr(INTRO_TEXT)
+    pad.addstr(INTRO_TEXT, curses.A_BOLD | PRIMARY )
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
-        scr.addstr(0,0,"v0.1")
+        scr.addstr(0,0,"v0.1", curses.A_BOLD | PRIMARY )
         scr.refresh()
         time.sleep(0.033)
     time.sleep(1.033)
@@ -488,6 +465,7 @@ def main(stdscr):
     load_state(autoload=True)   # Load 'savestate.json'
 
     while True:
+        stdscr.erase()
         
         # Make sure to setup a Midiport
         if outport == None or MIDI_PORT != config_data[0][0][0]:
@@ -549,23 +527,36 @@ def main(stdscr):
             draw_data(stdscr,phrase_data,channels,steps,render_style='tet')
         elif current_screen == 3:
             # CONFIG VIEW
-            # Header
-            stdscr.clear()
+            # Header            
             stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Value:     Settings      ",curses.A_REVERSE)
 
             # DATA
             channels = 1
             steps = MAX_CONFIG_STEPS
             update_input(stdscr,config_data,channels,steps)
             draw_column_no(stdscr,steps)
+
             draw_data(stdscr,config_data,channels,steps,render_style='int')
-            
 
+            stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
+            stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
+            stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Groove/Swing")
+            stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
 
-            pass
+            stdscr.refresh()
+
+        elif current_screen == 4:
+            # HELP VIEW
+            # Header 
+
+            stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
+
+            stdscr.refresh()
+
 
         else:
-                # fallback in case a non available screen number gets selected error happens
+            # fallback in case a non available screen number gets selected error happens
             pass
         
         if is_song_playing:
