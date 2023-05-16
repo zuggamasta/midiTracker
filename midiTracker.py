@@ -554,9 +554,11 @@ def main(stdscr):
             stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
 
             # DATA
+            channels = 1
+            steps = MAX_CONFIG_STEPS
             update_input(stdscr,config_data,channels,steps)
             draw_column_no(stdscr,steps)
-            draw_data(stdscr,config_data,channels,steps,render_style='str')
+            draw_data(stdscr,config_data,channels,steps,render_style='int')
             
 
 
