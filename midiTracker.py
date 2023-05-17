@@ -18,7 +18,7 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 MAX_MIDI = 128
-MAX_SONG_STEPS = 4
+MAX_SONG_STEPS = 16
 MAX_CHAIN_STEPS = 4
 MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
@@ -481,9 +481,9 @@ def draw_intro(scr):
 
 def draw_step_info(scr,y_pos,x_pos):
         scr.attron(shift_mod_color | curses.A_STANDOUT)
-        scr.addstr(y_pos+0,x_pos,f"song_step:  {song_step:02}")
-        scr.addstr(y_pos+1,x_pos,f"chain_step: {chain_step:02}")
-        scr.addstr(y_pos+2,x_pos,f"phrase_step:{phrase_step:02}")
+        scr.addstr(y_pos+0,x_pos,f"song_step:   {song_step:02}")
+        scr.addstr(y_pos+1,x_pos,f"chain_step:  {chain_step:02}")
+        scr.addstr(y_pos+2,x_pos,f"phrase_step: {phrase_step:02}")
         
         scr.attroff(shift_mod_color | curses.A_STANDOUT)
 
@@ -541,7 +541,7 @@ def main(stdscr):
             stdscr.clear()
 
         # draw global infos, these are always on screen.
-        stdscr.addstr(0,2,f"BPM:{bpm} | Device:{available_ports[MIDI_PORT]}")   # BPM and Midi port
+        stdscr.addstr(0,2,f"BPM:{bpm} | Device: {available_ports[MIDI_PORT][0:24]}")   # BPM and Midi port
         
         draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          # Playback info of song, chain and phrase step
         
@@ -623,8 +623,9 @@ def main(stdscr):
         if is_song_playing:
             play_song(0)
 
-        stdscr.addstr(0,40,f"A:{shift_mod_a}")
-        stdscr.addstr(1,40,f"B:{shift_mod_b}")
+        
+        stdscr.addstr(STEP_INFO_Y-2,STEP_INFO_X,f"A:{shift_mod_a}")
+        stdscr.addstr(STEP_INFO_Y-2,STEP_INFO_X+8,f"B:{shift_mod_b}")
 
 
         stdscr.refresh()
