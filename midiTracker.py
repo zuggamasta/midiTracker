@@ -40,6 +40,9 @@ active_chain = []
 active_phrase = []
 
 is_dirty = False
+shift_mod_a = False
+shift_mod_b = False
+shift_mod_color = 0
 
 midi_messages = [None for _ in range(MAX_CHANNELS)]
 
@@ -113,8 +116,9 @@ def load_state(autoload):
         if arguments[1] == "-load":
             has_load_argument = True
             save_file_name = arguments[2]
-        print("  LOADING...       ")
-           # Load the JSON file back as a dictionary
+        # print("  LOADING...       ")
+        
+        # Load the JSON file back as a dictionary
         with open(f"{save_file_name}", "r") as fp:
             loaded_data = json.load(fp)
 
@@ -124,8 +128,10 @@ def load_state(autoload):
     except:
         if has_load_argument:
             print("  File not found")
+            pass
         else:
-            print("  not loading   ")
+            # print("  not loading   ")
+            pass
 
  
 def save_state():
@@ -158,6 +164,9 @@ def update_input(scr,data,max_column,max_row):
     global current_config
     global active_data
     global is_dirty
+    global shift_mod_a
+    global shift_mod_b
+    global shift_mod_color
 
     is_dirty = True
 
@@ -167,6 +176,25 @@ def update_input(scr,data,max_column,max_row):
         key = None
         is_dirty = False
 
+    if key == "a":
+        if shift_mod_b:
+            shift_mod_b = False
+        shift_mod_a = not shift_mod_a
+
+    if key == "s":
+        if shift_mod_a:
+            shift_mod_a = False
+        shift_mod_b = not shift_mod_b
+
+    if shift_mod_a:
+        shift_mod_color = PRIMARY
+    elif shift_mod_b:
+        shift_mod_color = SECONDARY
+    
+    if not shift_mod_a and not shift_mod_b:
+        shift_mod_color = 0
+
+
     if current_screen == 0:
         active_data = current_song
     elif current_screen == 1:
@@ -175,6 +203,7 @@ def update_input(scr,data,max_column,max_row):
         active_data = current_phrase
     elif current_screen == 3:
         active_data == current_config
+
 
     if key == "1":
         current_screen = 0
@@ -188,7 +217,7 @@ def update_input(scr,data,max_column,max_row):
         current_screen = 4
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
-    elif key == "kUP5":
+    elif key == "KEY_UP" and shift_mod_b:
         # CHAIN SCENE
         if current_screen == 1:
             if current_chain+2 > len(chain_data) :
@@ -200,7 +229,7 @@ def update_input(scr,data,max_column,max_row):
                 phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
-    elif key == "kDN5":
+    elif key == "KEY_DOWN" and shift_mod_b:
         # CHAIN SCENE
         if current_screen == 1:
             current_chain -= 1
@@ -226,26 +255,26 @@ def update_input(scr,data,max_column,max_row):
         current_notes = [None for _ in range(MAX_CHANNELS)]
         last_notes = [None for _ in range(MAX_CHANNELS)]
     
-    elif key == "s":
+    elif key == "S":
         save_state()
 
     # MODIFY DATA
-    elif key == "KEY_SR":
+    elif key == "KEY_UP" and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] += 0x1
-    elif key == "KEY_SF":
+    elif key == "KEY_DOWN" and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] -= 0x1
-    elif key == "KEY_SRIGHT":
+    elif key == "KEY_RIGHT" and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] += 12
-    elif key == "KEY_SLEFT":
+    elif key == "KEY_LEFT" and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
@@ -257,18 +286,20 @@ def update_input(scr,data,max_column,max_row):
             data[active_data][cursor[0]][cursor[1]] = None
 
     # MOVE CURSOR
-    elif key == "KEY_UP":
-        cursor[1] -= 1
-    elif key == "KEY_DOWN":
-        cursor[1] += 1
-    elif key == "KEY_RIGHT":
-        cursor[0] += 1
-    elif key == "KEY_LEFT":
-        cursor[0] -= 1
+
+    if not shift_mod_a and not shift_mod_b:
+        if key == "KEY_UP" :
+            cursor[1] -= 1
+        elif key == "KEY_DOWN":
+            cursor[1] += 1
+        elif key == "KEY_RIGHT":
+            cursor[0] += 1
+        elif key == "KEY_LEFT":
+            cursor[0] -= 1
 
     # QUIT APPLICATION
 
-    elif key == "q":
+    if key == "q":
             panic()
 
             save_state_data = []
@@ -423,8 +454,12 @@ def panic():
 
 def draw_column_no(scr,columns):
     header_win = curses.newwin(columns+1,2,3,0)
+
     for frame in range(columns):
-        header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE)
+        header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
+
+
+
 
     scr.refresh()
     header_win.refresh()
@@ -445,12 +480,12 @@ def draw_intro(scr):
     scr.clear()
 
 def draw_step_info(scr,y_pos,x_pos):
-        scr.attron(PRIMARY | curses.A_STANDOUT | curses.A_BOLD)
+        scr.attron(shift_mod_color | curses.A_STANDOUT)
         scr.addstr(y_pos+0,x_pos,f"song_step:  {song_step:02}")
         scr.addstr(y_pos+1,x_pos,f"chain_step: {chain_step:02}")
         scr.addstr(y_pos+2,x_pos,f"phrase_step:{phrase_step:02}")
         
-        scr.attroff(PRIMARY | curses.A_STANDOUT)
+        scr.attroff(shift_mod_color | curses.A_STANDOUT)
 
 def setup_colors():
     global PRIMARY
@@ -466,6 +501,9 @@ def setup_colors():
     TERTIARY = curses.color_pair(3)
 
 def main(stdscr):
+
+    global shift_mod_a
+    global shift_mod_b
 
     global bpm
     global outport
@@ -506,7 +544,7 @@ def main(stdscr):
         stdscr.addstr(0,2,f"BPM:{bpm} | Device:{available_ports[MIDI_PORT]}")   # BPM and Midi port
         
         draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          # Playback info of song, chain and phrase step
-
+        
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -514,7 +552,7 @@ def main(stdscr):
             # Header
             
             stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_song:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE | shift_mod_color)
             
             # DATA
             channels = MAX_CHANNELS
@@ -526,7 +564,7 @@ def main(stdscr):
             # CHAIN VIEW
             # Header
             stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_chain:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"PhrsTrsp",curses.A_REVERSE)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"PhrsTrsp",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
             # DATA
@@ -539,7 +577,7 @@ def main(stdscr):
             # PHRASE VIEW
             # Header
             stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_phrase:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note CMD",curses.A_REVERSE)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note CMD",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
             # DATA
@@ -552,7 +590,7 @@ def main(stdscr):
             # CONFIG VIEW
             # Header            
             stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Value:     Settings      ",curses.A_REVERSE)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Value:     Settings      ",curses.A_REVERSE | shift_mod_color)
 
             # DATA
             channels = 1
@@ -584,6 +622,10 @@ def main(stdscr):
         
         if is_song_playing:
             play_song(0)
+
+        stdscr.addstr(0,40,f"A:{shift_mod_a}")
+        stdscr.addstr(1,40,f"B:{shift_mod_b}")
+
 
         stdscr.refresh()
 
