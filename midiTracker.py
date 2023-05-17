@@ -19,7 +19,7 @@ RENDER_STYLE = ['int','hex','tet','chr']
 MAX_CHANNELS = 6
 MAX_MIDI = 128
 MAX_SONG_STEPS = 4
-MAX_CHAIN_STEPS = 1
+MAX_CHAIN_STEPS = 4
 MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
@@ -87,12 +87,23 @@ def load_state(autoload):
     has_load_argument = False
 
     if autoload:
-        with open(f"savestate.json", "r") as fp:
-            loaded_data = json.load(fp)
+        try:
+            with open(f"savestate.json", "r") as fp:
+                loaded_data = json.load(fp)
 
-            song_data = loaded_data[0]
-            chain_data = loaded_data[1]
-            phrase_data = loaded_data[2]
+                song_data = loaded_data[0]
+                chain_data = loaded_data[1]
+                phrase_data = loaded_data[2]
+        except:
+            save_state_data = []
+
+            save_state_data.append(song_data)
+            save_state_data.append(chain_data)
+            save_state_data.append(phrase_data)
+            with open(f"savestate.json", "w") as fp:
+                json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+
+            
 
 
     try:
