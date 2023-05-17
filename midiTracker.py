@@ -39,6 +39,8 @@ active_data = 0
 active_chain = []
 active_phrase = []
 
+is_dirty = False
+
 midi_messages = [None for _ in range(MAX_CHANNELS)]
 
 song_step = 0
@@ -155,11 +157,15 @@ def update_input(scr,data,max_column,max_row):
     global current_phrase
     global current_config
     global active_data
-    
+    global is_dirty
+
+    is_dirty = True
+
     try:
         key = scr.getkey()
     except:
         key = None
+        is_dirty = False
 
     if current_screen == 0:
         active_data = current_song
@@ -475,9 +481,15 @@ def main(stdscr):
 
     load_state(autoload=True)   # Load 'savestate.json'
 
+    
+
     while True:
-        stdscr.erase()
+        if is_dirty:
+            stdscr.erase()
         
+        if bpm != config_data[0][0][1]:
+            bpm = config_data[0][0][1]
+
         # Make sure to setup a Midiport
         if outport == None or MIDI_PORT != config_data[0][0][0]:
             MIDI_PORT = config_data[0][0][0]
