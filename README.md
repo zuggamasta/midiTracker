@@ -21,10 +21,6 @@ d8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.
 
 aMidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
 
-I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
-
-
-### ⚠️ This tool is in its prototype phase ⚠️
 
 ## Running midiTracker
 
@@ -36,37 +32,55 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 - curses for Terminal UI - https://docs.python.org/3/howto/curses.html
 
 
-### Keyboard Controls:
-*← → ↑ ↓* : Navigation on Data Grid
+## Keyboard Controls:
 
-Shift + *←* : -12 units / 1 Octave
+### Change Screens
 
-Shift + *→* : +12 units / 1 Octave
+1 : Song Screen
 
-Shift + *↓* : -1 unit / Semitone
+2 : Chain Screen
 
-Shift + *↑* : Up Arrow: +1 / Semitone
+3 : Phrase Screen
+
+4 : Config Screen
 
 
+### Move the cursor:
 
-1 : Song View
+Arrow Keys *← → ↑ ↓* : Navigation on Data Grid
 
-2 : Chain View
+### Edit notes:
 
-3 : Phrase View
+A : Modifier 1 (Screen highlights in green)
 
-4 : Config View
+&emsp; Mod1 + *←* : -12 units / 1 Octave
+
+&emsp; Mod1 + *→* : +12 units / 1 Octave
+
+&emsp; Mod1 + *↓* : -1 unit / Semitone
+
+&emsp; Mod1 + *↑* : Up Arrow: +1 / Semitone
+
+### Change Chains and Phrases:
+
+S : Modifier 2 (Screen highlights in yellow/orange)
+
+&emsp; Mod2 + *↑* : View next Phrase or Chain
+
+&emsp; Mod2 + *↓* : View last Phrase or Chain
+
+### Other controls:
 
 w : Panic (stops all Midi Messages)
 
 Space : Panic / Restart Song
 
-s : Save
+shift + s : Save
 
 q : Quit
 
 
-### Saving / Loading
+## Saving / Loading
 
 Miditracker automatically saves your file when you quit a session with the ```'q'``` button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
 
@@ -74,11 +88,18 @@ You can save the current state of your file with the ```'s'``` button. Files wil
 
 ```miditracker.py -load yoursavefile.json```
 
-### PANIC / STOP ALL NOTES / RESTART
+## PANIC / STOP ALL NOTES / RESTART
 Use the ```space``` key to stop all playing midi channels and notes. This also restarts playback.
 
-### Quitting
+## Quitting
 process can be closed by the ```'q'``` key,
 
 ## Thank you
-Thank you to everyone helping and making all of this possible. I'll take care and list you all when there is a little more time to do so.
+Thank you to everyone helping and making all of this possible. Thank you Fiona, thank you Sylt, thank you Markus.
+
+
+
+
+## ⚠️ ⚠️ ⚠️ Use at your own risk ⚠️ ⚠️ ⚠️
+I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
+
