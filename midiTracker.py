@@ -23,7 +23,7 @@ MAX_CHAIN_STEPS = 4
 MAX_PHRASE_STEPS = 16
 MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
-SUB_STEPS = 4
+SUB_STEPS = 8
 MIDI_PORT = 0
 
 STEP_INFO_Y, STEP_INFO_X = 5, 28
@@ -58,18 +58,13 @@ song_data.append(song0)
 
 # CHAINS
 current_chain = 0
-chain_data = []
-chain0 = [[0 for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] # phrase | transpose
-chain_data.append(chain0)
-chain1 = [[1 for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] # phrase | transpose
-chain_data.append(chain1)
+chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] for i in range(MAX_MIDI)] # phrase | transpose
+
 
 
 # PHRASES
 current_phrase = 0
-phrase_data = []
-phrase0 = [[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] # note | CMD
-phrase_data.append(phrase0)
+phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] for _ in range(MAX_MIDI)] # note | CMD
 
 # NOTES
 current_notes = [None for _ in range(MAX_CHANNELS)]
@@ -106,7 +101,7 @@ def load_state(autoload):
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
             with open(f"savestate.json", "w") as fp:
-                json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+                json.dump(save_state_data, fp )  # Use indent=4 for a pretty-formatted JSON file
 
             
 
@@ -147,7 +142,7 @@ def save_state():
     print(formatted_date)
 
     with open(f"{formatted_date}.json", "w") as fp:
-        json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+        json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
     
     
 
@@ -299,7 +294,7 @@ def update_input(scr,data,max_column,max_row):
 
     # QUIT APPLICATION
 
-    if key == "q":
+    if key == "Q":
             panic()
 
             save_state_data = []
@@ -308,7 +303,7 @@ def update_input(scr,data,max_column,max_row):
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
             with open(f"savestate.json", "w") as fp:
-                json.dump(save_state_data, fp, indent=4)  # Use indent for a pretty-formatted JSON file
+                json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
             
             sys.exit()
     else:
