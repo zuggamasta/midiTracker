@@ -209,7 +209,8 @@ def update_input(scr,data,max_column,max_row):
     elif key == "4":
         current_screen = 3
     elif key == "5":
-        current_screen = 4
+        # current_screen = 4
+        pass
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == "KEY_UP" and shift_mod_b:
@@ -447,11 +448,14 @@ def panic():
         for note in range(MAX_MIDI):
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
-def draw_column_no(scr,columns):
+def draw_column_no(scr,columns,step):
     header_win = curses.newwin(columns+1,2,3,0)
 
     for frame in range(columns):
-        header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
+        if frame == step:
+            header_win.addstr(frame, 0, f"{frame:02}", shift_mod_color)
+        else:
+            header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
 
 
 
@@ -515,12 +519,15 @@ def main(stdscr):
     load_state(autoload=True)   # Load 'savestate.json'
 
     
-
-    while True:
-        if is_dirty:
+    # This keeps the app running 
+    while True:                 
+        
+        # is_dirty get set everytime an input changes the screen
+        if is_dirty:           
             stdscr.erase()
         
-        if bpm != config_data[0][0][1]:
+        # make sure that the songs bpm equals the bpm from the config data
+        if bpm != config_data[0][0][1]:    
             bpm = config_data[0][0][1]
 
         # Make sure to setup a Midiport
@@ -537,9 +544,14 @@ def main(stdscr):
 
         # draw global infos, these are always on screen.
         stdscr.addstr(0,2,f"BPM:{bpm} | Device: {available_ports[MIDI_PORT][0:24]}")   # BPM and Midi port
-        
-        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          # Playback info of song, chain and phrase step
-        
+
+        if phrase_step % 2 == 0:
+            stdscr.addstr(1,0, ". ", shift_mod_color)
+        else:
+            stdscr.addstr(1,0, "  " )
+
+        # draw Playback info of song, chain and phrase step
+        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -553,7 +565,7 @@ def main(stdscr):
             channels = MAX_CHANNELS
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps)
-            draw_column_no(stdscr,steps)
+            draw_column_no(stdscr,steps,song_step)
             draw_data(stdscr,song_data,channels,steps,render_style='int')
         elif current_screen == 1:
             # CHAIN VIEW
@@ -566,7 +578,7 @@ def main(stdscr):
             channels = 2
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps)
-            draw_column_no(stdscr,steps)
+            draw_column_no(stdscr,steps,chain_step)
             draw_data(stdscr,chain_data,channels,steps,render_style='int')
         elif current_screen == 2:
             # PHRASE VIEW
@@ -579,7 +591,7 @@ def main(stdscr):
             channels = 2
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
-            draw_column_no(stdscr,steps)
+            draw_column_no(stdscr,steps,phrase_step)
             draw_data(stdscr,phrase_data,channels,steps,render_style='tet')
         elif current_screen == 3:
             # CONFIG VIEW
@@ -591,7 +603,7 @@ def main(stdscr):
             channels = 1
             steps = MAX_CONFIG_STEPS
             update_input(stdscr,config_data,channels,steps)
-            draw_column_no(stdscr,steps)
+            draw_column_no(stdscr,steps,99)
 
             draw_data(stdscr,config_data,channels,steps,render_style='int')
 
@@ -618,9 +630,15 @@ def main(stdscr):
         if is_song_playing:
             play_song(0)
 
+        if shift_mod_a:
+            stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"-> Mod1 ", PRIMARY | curses.A_REVERSE)
+        else:
+            stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"  Mod1  ")
         
-        stdscr.addstr(STEP_INFO_Y-2,STEP_INFO_X,f"A:{shift_mod_a}")
-        stdscr.addstr(STEP_INFO_Y-2,STEP_INFO_X+8,f"B:{shift_mod_b}")
+        if shift_mod_b:
+            stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"-> Mod2 ", SECONDARY | curses.A_REVERSE)
+        else:
+            stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"  Mod2  ")
 
 
         stdscr.refresh()
