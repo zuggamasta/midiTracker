@@ -19,7 +19,7 @@ d8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.
 ```                                 
 
 
-aMidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCI user interface.
+aMidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCII user interface.
 
 
 ## Running midiTracker
@@ -75,9 +75,9 @@ w : Panic (stops all Midi Messages)
 
 Space : Panic / Restart Song
 
-shift + s : Save
+Shift + s : Save
 
-q : Quit
+Shift + q : Quit
 
 
 ## Saving / Loading
