@@ -26,6 +26,26 @@ INTRO_TEXT = ("                                        oo          dP    oo\n   
 SUB_STEPS = 8
 MIDI_PORT = 0
 
+KEYMAP = {
+    "up" :      "KEY_UP",
+    "down":     "KEY_DOWN",
+    "left":     "KEY_LEFT",
+    "right":    "KEY_RIGHT",
+    "moda":     "a",
+    "modb":     "s",
+    "delete":   "x",
+    "quit":     "Q",
+    "save":     "S",
+    "panic":    "w",
+    "restart":  " ",
+    "song":     "1",
+    "chain":    "2",
+    "phrase":   "3",
+    "config":   "4",
+    "help":     "h"
+    }
+
+
 STEP_INFO_Y, STEP_INFO_X = 5, 28
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
 
@@ -59,8 +79,6 @@ song_data.append(song0)
 # CHAINS
 current_chain = 0
 chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] for i in range(MAX_MIDI)] # phrase | transpose
-
-
 
 # PHRASES
 current_phrase = 0
@@ -103,9 +121,6 @@ def load_state(autoload):
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp )  # Use indent=4 for a pretty-formatted JSON file
 
-            
-
-
     try:
         arguments = sys.argv
         if arguments[1] == "-load":
@@ -128,7 +143,6 @@ def load_state(autoload):
             # print("  not loading   ")
             pass
 
- 
 def save_state():
 
     save_state_data = []
@@ -143,11 +157,8 @@ def save_state():
 
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
-    
-    
 
-
-def update_input(scr,data,max_column,max_row):
+def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     global song_step
     global chain_step
     global phrase_step
@@ -162,6 +173,7 @@ def update_input(scr,data,max_column,max_row):
     global shift_mod_a
     global shift_mod_b
     global shift_mod_color
+    global is_song_playing
 
     is_dirty = True
 
@@ -171,12 +183,12 @@ def update_input(scr,data,max_column,max_row):
         key = None
         is_dirty = False
 
-    if key == "a":
+    if key == KEYMAP["moda"]:
         if shift_mod_b:
             shift_mod_b = False
         shift_mod_a = not shift_mod_a
 
-    if key == "s":
+    if key == KEYMAP["modb"]:
         if shift_mod_a:
             shift_mod_a = False
         shift_mod_b = not shift_mod_b
@@ -213,7 +225,7 @@ def update_input(scr,data,max_column,max_row):
         pass
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
-    elif key == "KEY_UP" and shift_mod_b:
+    elif key == KEYMAP["up"] and shift_mod_b:
         # CHAIN SCENE
         if current_screen == 1:
             if current_chain+2 > len(chain_data) :
@@ -225,7 +237,7 @@ def update_input(scr,data,max_column,max_row):
                 phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
-    elif key == "KEY_DOWN" and shift_mod_b:
+    elif key == KEYMAP["down"] and shift_mod_b:
         # CHAIN SCENE
         if current_screen == 1:
             current_chain -= 1
@@ -238,11 +250,12 @@ def update_input(scr,data,max_column,max_row):
             if current_phrase < 0:
                 current_phrase = 0
  
-    elif key == "w":
+    elif key == KEYMAP["panic"]:
         panic()
 
-    elif key == " ":
+    elif key == KEYMAP["restart"]:
         panic()
+        is_song_playing = not is_song_playing
         song_step = 0
         chain_step = 0
         phrase_step = 0
@@ -251,31 +264,31 @@ def update_input(scr,data,max_column,max_row):
         current_notes = [None for _ in range(MAX_CHANNELS)]
         last_notes = [None for _ in range(MAX_CHANNELS)]
     
-    elif key == "S":
+    elif key == KEYMAP["save"]:
         save_state()
 
     # MODIFY DATA
-    elif key == "KEY_UP" and shift_mod_a:
+    elif key == KEYMAP["up"] and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] += 0x1
-    elif key == "KEY_DOWN" and shift_mod_a:
+    elif key == KEYMAP["down"] and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] -= 0x1
-    elif key == "KEY_RIGHT" and shift_mod_a:
+    elif key == KEYMAP["right"] and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] += 12
-    elif key == "KEY_LEFT" and shift_mod_a:
+    elif key == KEYMAP["left"] and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
             data[active_data][cursor[0]][cursor[1]] -= 12
-    elif key == "x":
+    elif key == KEYMAP["delete"]:
         if data[active_data][cursor[0]][cursor[1]] == None:
             pass
         else:
@@ -284,18 +297,18 @@ def update_input(scr,data,max_column,max_row):
     # MOVE CURSOR
 
     if not shift_mod_a and not shift_mod_b:
-        if key == "KEY_UP" :
+        if key == KEYMAP["up"] :
             cursor[1] -= 1
-        elif key == "KEY_DOWN":
+        elif key == KEYMAP["down"]:
             cursor[1] += 1
-        elif key == "KEY_RIGHT":
+        elif key == KEYMAP["right"]:
             cursor[0] += 1
-        elif key == "KEY_LEFT":
+        elif key == KEYMAP["left"]:
             cursor[0] -= 1
 
     # QUIT APPLICATION
 
-    if key == "Q":
+    if key == KEYMAP["quit"]:
             panic()
 
             save_state_data = []
@@ -321,14 +334,14 @@ def update_input(scr,data,max_column,max_row):
     if cursor[1] >= max_row:
         cursor[1] = 0
 
-    if current_screen == 3:
-        active_data = 0
-        current_config = 0
+    #if current_screen == 3:
+    #    active_data = 0
+    #    current_config = 0
 
     if data[active_data][cursor[0]][cursor[1]] != None:
         if data[active_data][cursor[0]][cursor[1]] < 0:
-            data[active_data][cursor[0]][cursor[1]] = MAX_MIDI-1
-        if data[active_data][cursor[0]][cursor[1]] > MAX_MIDI-1:
+            data[active_data][cursor[0]][cursor[1]] = max_value-1
+        if data[active_data][cursor[0]][cursor[1]] > max_value-1:
             data[active_data][cursor[0]][cursor[1]] = 0
 
     
@@ -480,6 +493,7 @@ def draw_intro(scr):
 
 def draw_step_info(scr,y_pos,x_pos):
         scr.attron(shift_mod_color | curses.A_STANDOUT)
+        
         scr.addstr(y_pos+0,x_pos,f"song_step:   {song_step:02}")
         scr.addstr(y_pos+1,x_pos,f"chain_step:  {chain_step:02}")
         scr.addstr(y_pos+2,x_pos,f"phrase_step: {phrase_step:02}")
@@ -535,6 +549,9 @@ def main(stdscr):
             MIDI_PORT = config_data[0][0][0]
             try:
                 available_ports = mido.get_input_names()
+                if MIDI_PORT >= len(available_ports):
+                    MIDI_PORT = 0
+                    config_data[0][0][0] = 0
                 outport = mido.open_output(available_ports[MIDI_PORT])
             
             except:
@@ -602,7 +619,7 @@ def main(stdscr):
             # DATA
             channels = 1
             steps = MAX_CONFIG_STEPS
-            update_input(stdscr,config_data,channels,steps)
+            update_input(stdscr,config_data,channels,steps,max_value=512)
             draw_column_no(stdscr,steps,99)
 
             draw_data(stdscr,config_data,channels,steps,render_style='int')
@@ -642,8 +659,6 @@ def main(stdscr):
 
 
         stdscr.refresh()
-
-
 
 wrapper(main)
 
