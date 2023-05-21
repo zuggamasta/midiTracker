@@ -12,7 +12,7 @@ import curses
 from curses import wrapper
 
 #CONSTANTS
-SCENES = ["SONG","CHAIN","PHRASE","CONFIG","HELP"]
+SCENES = ["SONG","CHAIN","PHRASE","CONFIG"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
@@ -25,6 +25,13 @@ MAX_CONFIG_STEPS = 4
 INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
 SUB_STEPS = 8
 MIDI_PORT = 0
+HEIGHT, WIDTH = 0,0
+
+HELP_TEXT_SONG="Use the modifiers switch between cursor movement and editing values. Change with the numbers 1-4 between screens. In the config view, change playback speed and reassing Midi Devices. "
+HELP_TEXT_CHAIN="Use Chains to connect multiple phrases together. Each new chain is filled with phrases. "
+HELP_TEXT_PHRASE="Use Phrases to arrange notes on a sixteenth grid."
+
+
 
 KEYMAP = {
     "up" :      "KEY_UP",
@@ -50,7 +57,7 @@ STEP_INFO_Y, STEP_INFO_X = 5, 28
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
 
 sub_step = 0
-time_step = 0
+help_scroll =0
 cursor = [0,0]
 is_song_playing = True
 bpm = 90
@@ -378,6 +385,17 @@ def draw_data(scr,data,max_column,max_row,render_style):
     scr.refresh()
     data_win.refresh()
 
+def draw_help(help_text):
+    global help_scroll
+    help_pad = curses.newpad(1,512)
+    help_pad.addstr(help_text)
+    help_pad.addstr(help_text)
+
+    help_pad.refresh(0,int(help_scroll),HEIGHT-1,0,HEIGHT-1,WIDTH-1)
+    help_scroll += 0.1
+    if help_scroll > len(help_text):
+        help_scroll = 0
+
 def play_song(song):
     global song_step
     global chain_step
@@ -477,6 +495,8 @@ def draw_column_no(scr,columns,step):
     header_win.refresh()
 
 def draw_intro(scr):
+    global HEIGHT
+    global WIDTH
     HEIGHT,WIDTH = scr.getmaxyx()
 
     pad = curses.newpad(16,68)
@@ -584,6 +604,7 @@ def main(stdscr):
             update_input(stdscr,song_data,channels,steps)
             draw_column_no(stdscr,steps,song_step)
             draw_data(stdscr,song_data,channels,steps,render_style='int')
+            draw_help(HELP_TEXT_SONG)
         elif current_screen == 1:
             # CHAIN VIEW
             # Header
@@ -597,6 +618,7 @@ def main(stdscr):
             update_input(stdscr,chain_data,channels,steps)
             draw_column_no(stdscr,steps,chain_step)
             draw_data(stdscr,chain_data,channels,steps,render_style='int')
+            draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
             # Header
@@ -631,15 +653,6 @@ def main(stdscr):
 
             stdscr.refresh()
 
-        elif current_screen == 4:
-            # HELP VIEW
-            # Header 
-
-            stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
-
-            stdscr.refresh()
-
-
         else:
             # fallback in case a non available screen number gets selected error happens
             pass
@@ -656,6 +669,7 @@ def main(stdscr):
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"-> Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"  Mod2  ")
+
 
 
         stdscr.refresh()
