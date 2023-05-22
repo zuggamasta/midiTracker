@@ -34,40 +34,42 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 
 ## Keyboard Controls:
 
+These is the keymap wich comes with midiTracker, you can change the assingment of keys in the top of the file.
+
 ### Change Screens
 
-1 : Song Screen
+```1``` : Song Screen
 
-2 : Chain Screen
+```2``` : Chain Screen
 
-3 : Phrase Screen
+```3``` : Phrase Screen
 
-4 : Config Screen
+```4``` : Config Screen
 
 
 ### Move the cursor:
 
-```Arrow Keys *← → ↑ ↓*``` : Navigation on Data Grid
+```Arrow Keys ← → ↑ ↓``` : Navigation on Data Grid
 
 ### Edit notes:
 
-A : Modifier 1 (Screen highlights in green)
+```a``` : Modifier 1 (Screen highlights in green)
 
-&emsp; ```Mod1 + *←*``` : -12 units / 1 Octave
+&emsp; ```Mod1 + ←``` : -12 units / 1 Octave
 
-&emsp; ```Mod1 + *→*``` : +12 units / 1 Octave
+&emsp; ```Mod1 + →``` : +12 units / 1 Octave
 
-&emsp; ```Mod1 + *↓*``` : -1 unit / Semitone
+&emsp; ```Mod1 + ↓``` : -1 unit / Semitone
 
-&emsp; ```Mod1 + *↑*``` : Up Arrow: +1 / Semitone
+&emsp; ```Mod1 + ↑``` : Up Arrow: +1 / Semitone
 
 ### Change Chains and Phrases:
 
-S : Modifier 2 (Screen highlights in yellow/orange)
+```s``` : Modifier 2 (Screen highlights in yellow/orange)
 
-&emsp; ```Mod2 + *↑*``` : View next Phrase or Chain
+&emsp; ```Mod2 + ↑``` : View next Phrase or Chain
 
-&emsp; ```Mod2 + *↓*``` : View last Phrase or Chain
+&emsp; ```Mod2 + ↓``` : View last Phrase or Chain
 
 ### Other controls:
 
@@ -92,7 +94,7 @@ You can save the current state of your file with the ```shift + s``` combination
 Use the ```space``` key to stop all playing midi channels and notes. This also restarts playback.
 
 ## Quitting
-process can be closed by the ```shift + q``` .
+process can be closed with ```shift + q``` .
 
 ## Thank you
 Thank you to everyone helping and making all of this possible. Thank you Mirjam, Thank you Fiona, thank you Sylt, thank you Markus.
