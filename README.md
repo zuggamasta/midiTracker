@@ -47,44 +47,44 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 
 ### Move the cursor:
 
-Arrow Keys *← → ↑ ↓* : Navigation on Data Grid
+```Arrow Keys *← → ↑ ↓*``` : Navigation on Data Grid
 
 ### Edit notes:
 
 A : Modifier 1 (Screen highlights in green)
 
-&emsp; Mod1 + *←* : -12 units / 1 Octave
+&emsp; ```Mod1 + *←*``` : -12 units / 1 Octave
 
-&emsp; Mod1 + *→* : +12 units / 1 Octave
+&emsp; ```Mod1 + *→*``` : +12 units / 1 Octave
 
-&emsp; Mod1 + *↓* : -1 unit / Semitone
+&emsp; ```Mod1 + *↓*``` : -1 unit / Semitone
 
-&emsp; Mod1 + *↑* : Up Arrow: +1 / Semitone
+&emsp; ```Mod1 + *↑*``` : Up Arrow: +1 / Semitone
 
 ### Change Chains and Phrases:
 
 S : Modifier 2 (Screen highlights in yellow/orange)
 
-&emsp; Mod2 + *↑* : View next Phrase or Chain
+&emsp; ```Mod2 + *↑*``` : View next Phrase or Chain
 
-&emsp; Mod2 + *↓* : View last Phrase or Chain
+&emsp; ```Mod2 + *↓*``` : View last Phrase or Chain
 
 ### Other controls:
 
-w : Panic (stops all Midi Messages)
+```w``` : Panic (stops all Midi Messages)
 
-Space : Panic / Restart Song
+```Space``` : Panic / Restart Song
 
-Shift + s : Save
+```Shift + s``` : Save
 
-Shift + q : Quit
+```Shift + q``` : Quit
 
 
 ## Saving / Loading
 
-Miditracker automatically saves your file when you quit a session with the ```'q'``` button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
+Miditracker automatically saves your file when you quit a session with ```shift ü q``` button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
 
-You can save the current state of your file with the ```'s'``` button. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use:
+You can save the current state of your file with the ```shift + s``` combination. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use:
 
 ```miditracker.py -load yoursavefile.json```
 
@@ -92,12 +92,10 @@ You can save the current state of your file with the ```'s'``` button. Files wil
 Use the ```space``` key to stop all playing midi channels and notes. This also restarts playback.
 
 ## Quitting
-process can be closed by the ```'q'``` key,
+process can be closed by the ```shift + q``` .
 
 ## Thank you
-Thank you to everyone helping and making all of this possible. Thank you Fiona, thank you Sylt, thank you Markus.
-
-
+Thank you to everyone helping and making all of this possible. Thank you Mirjam, Thank you Fiona, thank you Sylt, thank you Markus.
 
 
 ## ⚠️ ⚠️ ⚠️ Use at your own risk ⚠️ ⚠️ ⚠️
