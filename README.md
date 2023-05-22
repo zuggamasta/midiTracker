@@ -61,7 +61,13 @@ These is the keymap wich comes with midiTracker, you can change the assingment o
 
 &emsp; ```Mod1 + ↓``` : -1 unit / Semitone
 
-&emsp; ```Mod1 + ↑``` : Up Arrow: +1 / Semitone
+&emsp; ```Mod1 + ↑``` : +1 / Semitone
+
+&emsp; ```c``` : copy value
+
+&emsp; ```v``` : paste value
+
+&emsp; ```shift + v``` : flood value, writes copy buffer to all steps
 
 ### Change Chains and Phrases:
 
