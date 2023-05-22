@@ -31,8 +31,7 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 - rtmidi for python - https://github.com/superquadratic/rtmidi-python
 - curses for Terminal UI - https://docs.python.org/3/howto/curses.html
 
-![A screenshot of miditracker in action, showing the phrase editor](/Documentation/screen_1.png)
-
+![Song editor](/Documentation/screen_2.png)
 
 ## Keyboard Controls:
 
@@ -106,7 +105,7 @@ process can be closed with ```shift + q``` .
 
 ## More Screenshots
 
-![Song editor](/Documentation/screen_2.png)
+![A screenshot of miditracker in action, showing the phrase editor](/Documentation/screen_1.png)
 
 ![Chain editor](/Documentation/screen_3.png)
 
