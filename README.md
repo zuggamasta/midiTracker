@@ -31,6 +31,8 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 - rtmidi for python - https://github.com/superquadratic/rtmidi-python
 - curses for Terminal UI - https://docs.python.org/3/howto/curses.html
 
+![A screenshot of miditracker in action, showing the phrase editor](/Documentation/screen_1.png)
+
 
 ## Keyboard Controls:
 
@@ -101,6 +103,13 @@ Use the ```space``` key to stop all playing midi channels and notes. This also r
 
 ## Quitting
 process can be closed with ```shift + q``` .
+
+## More Screenshots
+
+![Song editor](/Documentation/screen_2.png)
+
+![Chain editor](/Documentation/screen_3.png)
+
 
 ## Thank you
 Thank you to everyone helping and making all of this possible. Thank you Mirjam, Thank you Fiona, thank you Sylt, thank you Markus.
