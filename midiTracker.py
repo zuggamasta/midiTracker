@@ -4,6 +4,7 @@ import time
 import json
 
 from datetime import datetime
+from copy import copy
 
 import mido
 from mido import Message
@@ -12,7 +13,7 @@ import curses
 from curses import wrapper
 
 #CONSTANTS
-SCENES = ["SONG","CHAIN","PHRASE","CONFIG"]
+SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
@@ -27,11 +28,10 @@ SUB_STEPS = 8
 MIDI_PORT = 0
 HEIGHT, WIDTH = 0,0
 
-HELP_TEXT_SONG="Use the modifiers switch between cursor movement and editing values. Change with the numbers 1-4 between screens. In the config view, change playback speed and reassing Midi Devices. "
+HELP_TEXT_SONG="Use the modifiers switch between cursor movement and editing values. Change with the numbers 1-4 between screens. "
 HELP_TEXT_CHAIN="Use Chains to connect multiple phrases together. Each new chain is filled with phrases. "
-HELP_TEXT_PHRASE="Use Phrases to arrange notes on a sixteenth grid."
-
-
+HELP_TEXT_PHRASE="Use Phrases to arrange notes on a sixteenth grid. "
+HELP_TEXT_CONFIG="Use the Configuration page to set Midi Device, tempo and other settings. "
 
 KEYMAP = {
     "up" :      "KEY_UP",
@@ -45,11 +45,15 @@ KEYMAP = {
     "save":     "S",
     "panic":    "w",
     "restart":  " ",
+    "help":     "h",
     "song":     "1",
     "chain":    "2",
     "phrase":   "3",
     "config":   "4",
-    "help":     "h"
+    "help":     "h",
+    "copy":     "c",
+    "paste":    "v",
+    "flood":    "V"
     }
 
 
@@ -70,6 +74,10 @@ is_dirty = False
 shift_mod_a = False
 shift_mod_b = False
 shift_mod_color = 0
+
+is_show_help = False
+
+copy_buffer = 0
 
 midi_messages = [None for _ in range(MAX_CHANNELS)]
 
@@ -100,7 +108,6 @@ current_config = 0
 config_data = []
 config=  [[0x01,120,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
 config_data.append(config)
-
 
 def load_state(autoload):
     
@@ -181,6 +188,8 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     global shift_mod_b
     global shift_mod_color
     global is_song_playing
+    global is_show_help
+    global copy_buffer
 
     is_dirty = True
 
@@ -208,6 +217,33 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     if not shift_mod_a and not shift_mod_b:
         shift_mod_color = 0
 
+    if key == KEYMAP["copy"]:
+        if current_screen == 3:
+            return
+        copy_buffer = copy(data[active_data][cursor[0]][cursor[1]] )
+
+    if key == KEYMAP["paste"]:
+        if current_screen == 3:
+            return
+        data[active_data][cursor[0]][cursor[1]] = copy(copy_buffer)
+    
+    if key == KEYMAP["flood"]:
+        flood_length = 0
+        if current_screen == 0:
+            flood_length = MAX_SONG_STEPS
+        elif current_screen == 1:
+            flood_length = MAX_CHAIN_STEPS
+        elif current_screen == 2:
+            flood_length = MAX_PHRASE_STEPS
+        elif current_screen == 3:
+            flood_length = 0
+        
+        for i in range(flood_length):
+            data[active_data][cursor[0]][i] = copy(copy_buffer)
+
+        shift_mod_a = False
+        shift_mod_b = False
+
 
     if current_screen == 0:
         active_data = current_song
@@ -218,45 +254,51 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     elif current_screen == 3:
         active_data == current_config
 
-
     if key == "1":
         current_screen = 0
+        shift_mod_a, shift_mod_b = False, False
     elif key == "2":
         current_screen = 1
+        shift_mod_a, shift_mod_b = False, False
     elif key == "3":
         current_screen = 2
+        shift_mod_a, shift_mod_b = False, False
     elif key == "4":
         current_screen = 3
+        shift_mod_a, shift_mod_b = False, False
     elif key == "5":
         # current_screen = 4
         pass
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == KEYMAP["up"] and shift_mod_b:
-        # CHAIN SCENE
+        # CHAIN SCREEN
         if current_screen == 1:
             if current_chain+2 > len(chain_data) :
                 chain_data.append([[None for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)])
             current_chain += 1
-        # PHRASE SCENE
+        # PHRASE SCREEN
         if current_screen == 2:
             if current_phrase+2 > len(phrase_data) :
                 phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
     elif key == KEYMAP["down"] and shift_mod_b:
-        # CHAIN SCENE
+        # CHAIN SCREEN
         if current_screen == 1:
             current_chain -= 1
             if current_chain < 0:
                 current_chain = 0
 
-        # PHRASE SCENE
+        # PHRASE SCREEN
         if current_screen == 2:
             current_phrase -= 1
             if current_phrase < 0:
                 current_phrase = 0
  
+    elif key == KEYMAP["help"]:
+        is_show_help = not is_show_help
+
     elif key == KEYMAP["panic"]:
         panic()
 
@@ -313,6 +355,8 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
         elif key == KEYMAP["left"]:
             cursor[0] -= 1
 
+
+
     # QUIT APPLICATION
 
     if key == KEYMAP["quit"]:
@@ -352,6 +396,9 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
             data[active_data][cursor[0]][cursor[1]] = 0
 
     
+
+
+    
     scr.refresh()
 
     return cursor
@@ -386,6 +433,8 @@ def draw_data(scr,data,max_column,max_row,render_style):
     data_win.refresh()
 
 def draw_help(help_text):
+    if not is_show_help:
+        return
     global help_scroll
     help_pad = curses.newpad(1,512)
     help_pad.addstr(help_text)
@@ -396,7 +445,7 @@ def draw_help(help_text):
     if help_scroll > len(help_text):
         help_scroll = 0
 
-def play_song(song):
+def play_song(song, scr):
     global song_step
     global chain_step
     global phrase_step
@@ -425,9 +474,6 @@ def play_song(song):
         current_notes = [None for _ in range(MAX_CHANNELS)]
         sub_step = 0
 
-
-
-
     if phrase_step >= MAX_PHRASE_STEPS:
         phrase_step = 0
         chain_step += 1
@@ -448,13 +494,11 @@ def play_chain(chain_no,channel):
     else:
         pass
 
-
 def play_phrase(phrase_no,channel):
     global phrase_step
     if phrase_step < 16:
         note = phrase_data[phrase_no][0][phrase_step]
         save_note(note, channel)
-
 
 def save_note(note, channel):
     
@@ -465,7 +509,7 @@ def play_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
             outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
-
+            
 def stop_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
@@ -487,9 +531,6 @@ def draw_column_no(scr,columns,step):
             header_win.addstr(frame, 0, f"{frame:02}", shift_mod_color)
         else:
             header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
-
-
-
 
     scr.refresh()
     header_win.refresh()
@@ -552,7 +593,6 @@ def main(stdscr):
 
     load_state(autoload=True)   # Load 'savestate.json'
 
-    
     # This keeps the app running 
     while True:                 
         
@@ -595,7 +635,7 @@ def main(stdscr):
             # SONG VIEW
             # Header
             
-            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_song:02}      ")
+            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_song:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE | shift_mod_color)
             
             # DATA
@@ -608,7 +648,7 @@ def main(stdscr):
         elif current_screen == 1:
             # CHAIN VIEW
             # Header
-            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_chain:02}      ")
+            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_chain:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"PhrsTrsp",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
@@ -622,7 +662,7 @@ def main(stdscr):
         elif current_screen == 2:
             # PHRASE VIEW
             # Header
-            stdscr.addstr(1,2,f"{SCENES[current_screen]} {current_phrase:02}      ")
+            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_phrase:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note CMD",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
@@ -632,10 +672,12 @@ def main(stdscr):
             update_input(stdscr,phrase_data,channels,steps)
             draw_column_no(stdscr,steps,phrase_step)
             draw_data(stdscr,phrase_data,channels,steps,render_style='tet')
+            draw_help(HELP_TEXT_PHRASE)
+
         elif current_screen == 3:
             # CONFIG VIEW
             # Header            
-            stdscr.addstr(1,2,f"{SCENES[current_screen]}    ")
+            stdscr.addstr(1,2,f"{SCREENS[current_screen]}    ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Value:     Settings      ",curses.A_REVERSE | shift_mod_color)
 
             # DATA
@@ -645,6 +687,8 @@ def main(stdscr):
             draw_column_no(stdscr,steps,99)
 
             draw_data(stdscr,config_data,channels,steps,render_style='int')
+            draw_help(HELP_TEXT_CONFIG)
+
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
             stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
@@ -658,7 +702,7 @@ def main(stdscr):
             pass
         
         if is_song_playing:
-            play_song(0)
+            play_song(0,stdscr)
 
         if shift_mod_a:
             stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"-> Mod1 ", PRIMARY | curses.A_REVERSE)
