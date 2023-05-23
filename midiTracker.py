@@ -1,38 +1,47 @@
-# utilities
+# PYTHON UTILITY MODULES
 import sys
 import time
 import json
-
 from datetime import datetime
 from copy import copy
 
+# MIDI OBJECT MODULE (Requires python-rtmidi)
 import mido
 from mido import Message
 
+# CURSES MODULE, Interface rendering
 import curses
 from curses import wrapper
 
-#CONSTANTS
+################################
+#          CONSTANTS           #
+################################
+
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
-MAX_CHANNELS = 16
 MAX_MIDI = 128
-MAX_SONG_STEPS = 8
-MAX_CHAIN_STEPS = 4
-MAX_PHRASE_STEPS = 16
-MAX_CONFIG_STEPS = 4
-INTRO_TEXT = ("                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
-SUB_STEPS = 8
-MIDI_PORT = 0
-HEIGHT, WIDTH = 0,0
+HEIGHT, WIDTH = 0,0 # Will be set by the program to the height and with of the available screen in Chracters.
+MAX_CONFIG_STEPS = 4    # DO NOT CHANGE
 
+# USER EDITABLE CONSTANTS
+MAX_CHANNELS = 8        # DEFAULT = 8
+MAX_SONG_STEPS = 8      # DEFAULT = 8
+MAX_CHAIN_STEPS = 4     # DEFAULT = 4
+MAX_PHRASE_STEPS = 16   # DEFAULT = 16
+MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
+SUB_STEPS = 8           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
+
+# TEXT ELEMENTS
+INTRO_TEXT = ("\n                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
 HELP_TEXT_SONG="Use the modifiers switch between cursor movement and editing values. Change with the numbers 1-4 between screens. "
-HELP_TEXT_CHAIN="Use Chains to connect multiple phrases together. Each new chain is filled with phrases. "
-HELP_TEXT_PHRASE="Use Phrases to arrange notes on a sixteenth grid. "
-HELP_TEXT_CONFIG="Use the Configuration page to set Midi Device, tempo and other settings. "
+HELP_TEXT_CHAIN="Use chains to connect multiple phrases together. Each new chain is filled with phrases. "
+HELP_TEXT_PHRASE="Use phrases to arrange notes on a sixteenth grid. "
+HELP_TEXT_CONFIG="Use the configuration page to set Midi device, tempo and other settings. "
+HEADER_STRING = "Chn1Chn2Chn3Chn4RmplChn6Chn7Chn8Chn9Ch10Ch11Ch12Ch13Ch14Ch15Ch16"[0:MAX_CHANNELS*SLOT_WIDTH]
 
+# INPUT
 KEYMAP = {
     "up" :      "KEY_UP",
     "down":     "KEY_DOWN",
@@ -56,54 +65,58 @@ KEYMAP = {
     "flood":    "V"
     }
 
-
+# LAYOUT
 STEP_INFO_Y, STEP_INFO_X = 5, 2 + MAX_CHANNELS*SLOT_WIDTH + 2
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
 
+################################
+#          VARIABLES           #
+################################
+
+# TIME AND ANIMATION
 sub_step = 0
-help_scroll =0
-cursor = [0,0]
-is_song_playing = True
+help_scroll = 0
 bpm = 90
+
+# INTERFACE AND UI
+cursor = [0,0]
 current_screen = 0
 active_data = 0 
-active_chain = []
-active_phrase = []
 
+# BOOLS
+is_song_playing = True
+is_show_help = False
 is_dirty = False
 shift_mod_a = False
 shift_mod_b = False
 shift_mod_color = 0
 
-is_show_help = False
-
+# BUFFERS
 copy_buffer = 0
+midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
+current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
+active_chain_buffer = []
+active_phrase_buffer = []
 
-midi_messages = [None for _ in range(MAX_CHANNELS)]
-
+# TRANSPORT
 song_step = 0
 chain_step = 0
 phrase_step = 0
 
-# SONGS
+# SONG DATA
 current_song = 0
-song_data = []
-song0 = [[None for _ in range(MAX_SONG_STEPS)] for _ in range(MAX_CHANNELS)]
-song_data.append(song0)
+song_data = [[[None for _ in range(MAX_SONG_STEPS)] for _ in range(MAX_CHANNELS)]]
 
-# CHAINS
+# CHAINS DATA
 current_chain = 0
 chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] for i in range(MAX_MIDI)] # phrase | transpose
 
-# PHRASES
+# PHRASES DATA
 current_phrase = 0
 phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] for _ in range(MAX_MIDI)] # note | CMD
 
-# NOTES
-current_notes = [None for _ in range(MAX_CHANNELS)]
-last_notes = [None for _ in range(MAX_CHANNELS)]
-
-# CONFIG
+# CONFIG DATA
 current_config = 0
 config_data = []
 config=  [[0x01,120,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
@@ -172,7 +185,7 @@ def save_state():
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
 
-def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
+def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 12):
     global song_step
     global chain_step
     global phrase_step
@@ -308,10 +321,10 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
         song_step = 0
         chain_step = 0
         phrase_step = 0
-        global current_notes
-        global last_notes
-        current_notes = [None for _ in range(MAX_CHANNELS)]
-        last_notes = [None for _ in range(MAX_CHANNELS)]
+        global current_notes_buffer
+        global last_notes_buffer
+        current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+        last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
     
     elif key == KEYMAP["save"]:
         save_state()
@@ -331,12 +344,12 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
-            data[active_data][cursor[0]][cursor[1]] += 12
+            data[active_data][cursor[0]][cursor[1]] += large_step
     elif key == KEYMAP["left"] and shift_mod_a:
         if data[active_data][cursor[0]][cursor[1]] == None:
             data[active_data][cursor[0]][cursor[1]] = 0x0
         else:
-            data[active_data][cursor[0]][cursor[1]] -= 12
+            data[active_data][cursor[0]][cursor[1]] -= large_step
     elif key == KEYMAP["delete"]:
         if data[active_data][cursor[0]][cursor[1]] == None:
             pass
@@ -374,7 +387,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     else:
         pass
     
-    
     # WRAP CURSOR AROUND
     if cursor[0] < 0:
         cursor[0] = max_column-1
@@ -385,19 +397,15 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
     if cursor[1] >= max_row:
         cursor[1] = 0
 
-    #if current_screen == 3:
-    #    active_data = 0
-    #    current_config = 0
+    if current_screen == 3:
+        active_data = 0
+        current_config = 0
 
     if data[active_data][cursor[0]][cursor[1]] != None:
         if data[active_data][cursor[0]][cursor[1]] < 0:
             data[active_data][cursor[0]][cursor[1]] = max_value-1
         if data[active_data][cursor[0]][cursor[1]] > max_value-1:
             data[active_data][cursor[0]][cursor[1]] = 0
-
-    
-
-
     
     scr.refresh()
 
@@ -436,9 +444,9 @@ def draw_help(help_text):
     if not is_show_help:
         return
     global help_scroll
-    help_pad = curses.newpad(1,512)
-    help_pad.addstr(help_text)
-    help_pad.addstr(help_text)
+    help_pad = curses.newpad(1,512) # 512 is just a large number, this should be the max of helptext length * 2
+    help_pad.addstr(help_text, shift_mod_color | curses.A_REVERSE)
+    help_pad.addstr(help_text, shift_mod_color | curses.A_REVERSE)
 
     help_pad.refresh(0,int(help_scroll),HEIGHT-1,0,HEIGHT-1,WIDTH-1)
     help_scroll += 0.1
@@ -450,7 +458,7 @@ def play_song(song, scr):
     global chain_step
     global phrase_step
     global song_data
-    global current_notes
+    global current_notes_buffer
     global sub_step
 
     if(sub_step == 0):
@@ -462,16 +470,16 @@ def play_song(song, scr):
                     play_chain(active_chain_no,song_channel)
                 else:
                     pass
-        play_notes(current_notes)
+        play_notes(current_notes_buffer)
 
     time.sleep(60/bpm/4/SUB_STEPS)
 
     sub_step += 1
 
     if(sub_step > SUB_STEPS):
-        stop_notes(current_notes)
+        stop_notes(current_notes_buffer)
         phrase_step += 1 
-        current_notes = [None for _ in range(MAX_CHANNELS)]
+        current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         sub_step = 0
 
     if phrase_step >= MAX_PHRASE_STEPS:
@@ -496,14 +504,14 @@ def play_chain(chain_no,channel):
 
 def play_phrase(phrase_no,channel):
     global phrase_step
-    if phrase_step < 16:
+    if phrase_step < MAX_PHRASE_STEPS:
         note = phrase_data[phrase_no][0][phrase_step]
         save_note(note, channel)
 
 def save_note(note, channel):
     
-    current_notes[channel] = note
-    last_notes[channel] = note
+    current_notes_buffer[channel] = note
+    last_notes_buffer[channel] = note
 
 def play_notes(notes):
     for channel in range(MAX_CHANNELS):
@@ -636,12 +644,12 @@ def main(stdscr):
             # Header
             
             stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_song:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4RmplChn6",curses.A_REVERSE | shift_mod_color)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"{HEADER_STRING}",curses.A_REVERSE | shift_mod_color)
             
             # DATA
             channels = MAX_CHANNELS
             steps = MAX_SONG_STEPS
-            update_input(stdscr,song_data,channels,steps)
+            update_input(stdscr,song_data,channels,steps,large_step=10)
             draw_column_no(stdscr,steps,song_step)
             draw_data(stdscr,song_data,channels,steps,render_style='int')
             draw_help(HELP_TEXT_SONG)
@@ -655,7 +663,7 @@ def main(stdscr):
             # DATA
             channels = 2
             steps = MAX_CHAIN_STEPS
-            update_input(stdscr,chain_data,channels,steps)
+            update_input(stdscr,chain_data,channels,steps,large_step=10)
             draw_column_no(stdscr,steps,chain_step)
             draw_data(stdscr,chain_data,channels,steps,render_style='int')
             draw_help(HELP_TEXT_CHAIN)
@@ -683,12 +691,11 @@ def main(stdscr):
             # DATA
             channels = 1
             steps = MAX_CONFIG_STEPS
-            update_input(stdscr,config_data,channels,steps,max_value=512)
+            update_input(stdscr,config_data,channels,steps,max_value=512,large_step=10)
             draw_column_no(stdscr,steps,99)
 
             draw_data(stdscr,config_data,channels,steps,render_style='int')
             draw_help(HELP_TEXT_CONFIG)
-
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
             stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
@@ -713,8 +720,6 @@ def main(stdscr):
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"-> Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"  Mod2  ")
-
-
 
         stdscr.refresh()
 
