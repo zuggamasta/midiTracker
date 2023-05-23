@@ -17,7 +17,7 @@ SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
-MAX_CHANNELS = 6
+MAX_CHANNELS = 16
 MAX_MIDI = 128
 MAX_SONG_STEPS = 8
 MAX_CHAIN_STEPS = 4
@@ -57,7 +57,7 @@ KEYMAP = {
     }
 
 
-STEP_INFO_Y, STEP_INFO_X = 5, 28
+STEP_INFO_Y, STEP_INFO_X = 5, 2 + MAX_CHANNELS*SLOT_WIDTH + 2
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
 
 sub_step = 0
