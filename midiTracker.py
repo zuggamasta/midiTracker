@@ -636,7 +636,7 @@ def main(stdscr):
             # Header
             
             stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_song:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4Chn5Chn6",curses.A_REVERSE | shift_mod_color)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Chn1Chn2Chn3Chn4RmplChn6",curses.A_REVERSE | shift_mod_color)
             
             # DATA
             channels = MAX_CHANNELS
