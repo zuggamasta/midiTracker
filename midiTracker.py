@@ -386,7 +386,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
             save_state_data.append(config_data)
-            
+
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
             
@@ -637,13 +637,18 @@ def main(stdscr):
         # draw global infos, these are always on screen.
         stdscr.addstr(0,2,f"BPM:{bpm} | Device: {available_ports[MIDI_PORT][0:24]}")   # BPM and Midi port
 
-        if phrase_step % 2 == 0:
-            stdscr.addstr(1,0, ". ", shift_mod_color)
+        # blinking dot to show that the program is working
+        if is_song_playing:
+            if phrase_step % 2 == 0:
+                stdscr.addstr(2,0, "  ", curses.A_REVERSE | shift_mod_color)
+            else:
+                stdscr.addstr(2,0, "  ", )
         else:
-            stdscr.addstr(1,0, "  " )
+            stdscr.addstr(2,0, "  ", )
 
         # draw Playback info of song, chain and phrase step
         draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          
+
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
