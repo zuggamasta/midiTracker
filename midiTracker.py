@@ -386,6 +386,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
             save_state_data.append(config_data)
+            
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
             
