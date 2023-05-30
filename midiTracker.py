@@ -127,6 +127,7 @@ def load_state(autoload):
     global song_data
     global chain_data
     global phrase_data
+    global config_data
 
     save_file_name = None
     has_load_argument = False
@@ -139,12 +140,14 @@ def load_state(autoload):
                 song_data = loaded_data[0]
                 chain_data = loaded_data[1]
                 phrase_data = loaded_data[2]
+                config_data = loaded_data [3]
         except:
             save_state_data = []
 
             save_state_data.append(song_data)
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
+            save_state_data.append(config_data)
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp )  # Use indent=4 for a pretty-formatted JSON file
 
@@ -162,6 +165,7 @@ def load_state(autoload):
             song_data = loaded_data[0]
             chain_data = loaded_data[1]
             phrase_data = loaded_data[2]
+            config_data = loaded_data[3]
     except:
         if has_load_argument:
             print("  File not found")
@@ -177,6 +181,7 @@ def save_state():
     save_state_data.append(song_data)
     save_state_data.append(chain_data)
     save_state_data.append(phrase_data)
+    save_state_data.append(config_data)
 
     now = datetime.now()
     formatted_date = f"{now:%y%m%d-%H-%M}"
@@ -380,6 +385,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
             save_state_data.append(song_data)
             save_state_data.append(chain_data)
             save_state_data.append(phrase_data)
+            save_state_data.append(config_data)
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
             
