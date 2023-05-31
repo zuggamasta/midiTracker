@@ -483,7 +483,7 @@ def play_song(song, scr):
 
     sub_step += 1
 
-    if(sub_step > SUB_STEPS):
+    if(sub_step >= SUB_STEPS):
         stop_notes(current_notes_buffer)
         phrase_step += 1 
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
@@ -722,6 +722,7 @@ def main(stdscr):
         
         if is_song_playing:
             play_song(0,stdscr)
+
 
         if shift_mod_a:
             stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"-> Mod1 ", PRIMARY | curses.A_REVERSE)
