@@ -74,7 +74,7 @@ These is the keymap wich comes with midiTracker, you can change the assingment o
 
 &emsp; ```Mod2 + ↑``` : View last Phrase or Chain
 
-&emsp; *The arrows for switching between chains and phrases are fipped as it made more sense for me. Makes it feel like there is a wheel you scroll through to get to the element you're looking for. 
+&emsp; *The arrows for switching between chains and phrases are fipped as it made more sense for me. Makes it feel like there is a wheel you scroll through to get to the element you're looking for.* 
 
 ### Other controls:
 
