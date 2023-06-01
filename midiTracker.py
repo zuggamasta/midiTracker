@@ -194,6 +194,8 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     global song_step
     global chain_step
     global phrase_step
+    global sub_step 
+
     global cursor
     global current_screen
     global current_song
@@ -201,6 +203,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     global current_phrase
     global current_config
     global active_data
+
     global is_dirty
     global shift_mod_a
     global shift_mod_b
@@ -289,7 +292,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         pass
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
-    elif key == KEYMAP["up"] and shift_mod_b:
+    elif key == KEYMAP["down"] and shift_mod_b:
         # CHAIN SCREEN
         if current_screen == 1:
             if current_chain+2 > len(chain_data) :
@@ -301,7 +304,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
                 phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
             current_phrase += 1
         
-    elif key == KEYMAP["down"] and shift_mod_b:
+    elif key == KEYMAP["up"] and shift_mod_b:
         # CHAIN SCREEN
         if current_screen == 1:
             current_chain -= 1
@@ -326,6 +329,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         song_step = 0
         chain_step = 0
         phrase_step = 0
+        sub_step = 0
         global current_notes_buffer
         global last_notes_buffer
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
