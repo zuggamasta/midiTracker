@@ -422,7 +422,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     return cursor
 
-def draw_data(scr,data,max_column,max_row,render_style):
+def draw_data(scr,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)]):
     data_win = curses.newwin(max_row,max_column*4+2,3,2)
 
     for row in range(max_row):
@@ -433,15 +433,18 @@ def draw_data(scr,data,max_column,max_row,render_style):
             if slot == None:
                 render_slot = " -- "
             else:
-                if render_style == 'tet':
+                if render_style[column] == 'tet':
                     note = NOTES_LOOKUP[int(slot)%12]
                     render_slot = f" {note}{round(int(slot/12)%12)+1}"
-                elif render_style == 'hex':
+                elif render_style[column] == 'hex':
                     render_slot = f" {slot:02x} "
-                elif render_style == 'int':
+                elif render_style[column] == 'int':
                     render_slot = f" {slot:02} "
-                elif render_style == 'str':
+                elif render_style[column] == 'str':
                     render_slot = f" {slot} "
+                elif render_style[column] == 'mod':
+                    render_slot = f"  {chr(slot%26+65)} " # warp around every 26 character A-Z, not including small letters.
+                    # TODO: make a list of modifiers to display to have two letter modifiers 
 
             if row == cursor[1] and column == cursor[0]:
                 data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
@@ -581,6 +584,8 @@ def draw_step_info(scr,y_pos,x_pos):
         scr.attroff(shift_mod_color | curses.A_STANDOUT)
 
 def setup_colors():
+
+
     global PRIMARY
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     PRIMARY = curses.color_pair(1)
@@ -667,7 +672,7 @@ def main(stdscr):
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps,large_step=10)
             draw_column_no(stdscr,steps,song_step)
-            draw_data(stdscr,song_data,channels,steps,render_style='int')
+            draw_data(stdscr,song_data,channels,steps)
             draw_help(HELP_TEXT_SONG)
         elif current_screen == 1:
             # CHAIN VIEW
@@ -681,7 +686,7 @@ def main(stdscr):
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps,large_step=10)
             draw_column_no(stdscr,steps,chain_step)
-            draw_data(stdscr,chain_data,channels,steps,render_style='int')
+            draw_data(stdscr,chain_data,channels,steps,render_style=['int','int'])
             draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
@@ -695,7 +700,7 @@ def main(stdscr):
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
             draw_column_no(stdscr,steps,phrase_step)
-            draw_data(stdscr,phrase_data,channels,steps,render_style='tet')
+            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
@@ -710,7 +715,7 @@ def main(stdscr):
             update_input(stdscr,config_data,channels,steps,max_value=512,large_step=10)
             draw_column_no(stdscr,steps,99)
 
-            draw_data(stdscr,config_data,channels,steps,render_style='int')
+            draw_data(stdscr,config_data,channels,steps,render_style=['int'])
             draw_help(HELP_TEXT_CONFIG)
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
