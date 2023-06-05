@@ -4,6 +4,7 @@ import time
 import json
 from datetime import datetime
 from copy import copy
+import random
 
 # MIDI OBJECT MODULE (Requires python-rtmidi)
 import mido
@@ -18,6 +19,9 @@ from curses import wrapper
 ################################
 
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
+
+MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg"]
+MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
@@ -95,6 +99,8 @@ shift_mod_color = 0
 copy_buffer = 0
 midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
 current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
+
 last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
 active_chain_buffer = []
 active_phrase_buffer = []
@@ -114,13 +120,16 @@ chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] for i in r
 
 # PHRASES DATA
 current_phrase = 0
-phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)] for _ in range(MAX_MIDI)] # note | CMD
+phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(3)] for _ in range(MAX_MIDI)] # note | CMD
 
 # CONFIG DATA
 current_config = 0
 config_data = []
 config=  [[0x01,120,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
 config_data.append(config)
+
+def draw_debug(scr,value):
+    scr.addstr(19,0,value)
 
 def load_state(autoload):
     
@@ -443,8 +452,8 @@ def draw_data(scr,data,max_column,max_row,render_style=['int' for _ in range(MAX
                 elif render_style[column] == 'str':
                     render_slot = f" {slot} "
                 elif render_style[column] == 'mod':
-                    render_slot = f"  {chr(slot%26+65)} " # warp around every 26 character A-Z, not including small letters.
-                    # TODO: make a list of modifiers to display to have two letter modifiers 
+                    modifier = MODIFIERS_LOOKUP[int(slot)%MODIFIERS_LEN]
+                    render_slot = f"{modifier}" # warp around every modifier lookup character
 
             if row == cursor[1] and column == cursor[0]:
                 data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
@@ -484,7 +493,7 @@ def play_song(song, scr):
                     play_chain(active_chain_no,song_channel)
                 else:
                     pass
-        play_notes(current_notes_buffer)
+        play_notes(current_notes_buffer,current_modifier_buffer)
 
     time.sleep(60/bpm/4/SUB_STEPS)
 
@@ -520,17 +529,29 @@ def play_phrase(phrase_no,channel):
     global phrase_step
     if phrase_step < MAX_PHRASE_STEPS:
         note = phrase_data[phrase_no][0][phrase_step]
-        save_note(note, channel)
+        modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
+        save_note(note, modifier, channel)
 
-def save_note(note, channel):
+def save_note(note, modifier, channel):
     
     current_notes_buffer[channel] = note
+    current_modifier_buffer[channel] = modifier
+
     last_notes_buffer[channel] = note
 
-def play_notes(notes):
+def play_notes(notes,modifiers):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
-            outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+            if modifiers[channel][0] == None:
+                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+            elif  modifiers[channel][0] == 3 and not modifiers[channel][1] == None :
+                modifier_value =  modifiers[channel][1]
+                if modifier_value == None:
+                    modifier_value == 0
+                modifier_value =  random.randint(0,modifier_value)
+                notes[channel] = (notes[channel]+modifier_value)%127
+                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+
             
 def stop_notes(notes):
     for channel in range(MAX_CHANNELS):
@@ -658,6 +679,7 @@ def main(stdscr):
         # draw Playback info of song, chain and phrase step
         draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          
 
+        #draw_debug(stdscr,str(current_modifier_buffer[:4]))
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -692,15 +714,15 @@ def main(stdscr):
             # PHRASE VIEW
             # Header
             stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_phrase:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note CMD",curses.A_REVERSE | shift_mod_color)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MODValue",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
             # DATA
-            channels = 2
+            channels = 3
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
             draw_column_no(stdscr,steps,phrase_step)
-            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod'])
+            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod','int'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
