@@ -544,13 +544,27 @@ def play_notes(notes,modifiers):
         if notes[channel] != None:
             if modifiers[channel][0] == None:
                 outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
-            elif  modifiers[channel][0] == 3 and not modifiers[channel][1] == None :
-                modifier_value =  modifiers[channel][1]
-                if modifier_value == None:
-                    modifier_value == 0
-                modifier_value =  random.randint(0,modifier_value)
-                notes[channel] = (notes[channel]+modifier_value)%127
-                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+            
+            elif  modifiers[channel][0] == 3: # RND
+                if modifiers[channel][1] == None:
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                else:
+                    modifier_value =  modifiers[channel][1]
+                    if modifier_value == None:
+                        modifier_value == 0
+                    modifier_value =  random.randint(0,modifier_value)
+                    notes[channel] = (notes[channel]+modifier_value)%127
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+            
+            elif  modifiers[channel][0] == 2: # RND
+                if modifiers[channel][1] == None:
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                else:
+                    jump = random.randint(0, modifiers[channel][1]) #compare to 0?
+                    if jump == 0:
+                        outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                    else:
+                        pass
 
             
 def stop_notes(notes):
@@ -679,7 +693,6 @@ def main(stdscr):
         # draw Playback info of song, chain and phrase step
         draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          
 
-        #draw_debug(stdscr,str(current_modifier_buffer[:4]))
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
