@@ -20,7 +20,7 @@ from curses import wrapper
 
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
 
-MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg"]
+MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg","PC1"]
 MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
@@ -28,6 +28,10 @@ RENDER_STYLE = ['int','hex','tet','chr']
 MAX_MIDI = 128
 HEIGHT, WIDTH = 0,0 # Will be set by the program to the height and with of the available screen in Chracters.
 MAX_CONFIG_STEPS = 4    # DO NOT CHANGE
+MAX_CHAIN_PARAMETERS = 2
+MAX_PHRASE_PARAMETERS = 7
+
+
 
 # USER EDITABLE CONSTANTS
 MAX_CHANNELS = 8        # DEFAULT = 8
@@ -100,6 +104,8 @@ copy_buffer = 0
 midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
 current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
 current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
+current_cc_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
+
 
 last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
 active_chain_buffer = []
@@ -116,11 +122,11 @@ song_data = [[[None for _ in range(MAX_SONG_STEPS)] for _ in range(MAX_CHANNELS)
 
 # CHAINS DATA
 current_chain = 0
-chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(2)] for i in range(MAX_MIDI)] # phrase | transpose
+chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(MAX_CHAIN_PARAMETERS)] for i in range(MAX_MIDI)] # phrase | transpose
 
 # PHRASES DATA
 current_phrase = 0
-phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(3)] for _ in range(MAX_MIDI)] # note | CMD
+phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(MAX_PHRASE_PARAMETERS)] for _ in range(MAX_MIDI)] # note | CMD
 
 # CONFIG DATA
 current_config = 0
@@ -493,7 +499,7 @@ def play_song(song, scr):
                     play_chain(active_chain_no,song_channel)
                 else:
                     pass
-        play_notes(current_notes_buffer,current_modifier_buffer)
+        play_notes(current_notes_buffer,current_modifier_buffer,current_cc_buffer)
 
     time.sleep(60/bpm/4/SUB_STEPS)
 
@@ -530,17 +536,23 @@ def play_phrase(phrase_no,channel):
     if phrase_step < MAX_PHRASE_STEPS:
         note = phrase_data[phrase_no][0][phrase_step]
         modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
-        save_note(note, modifier, channel)
+        cc = phrase_data[phrase_no][5][phrase_step],phrase_data[phrase_no][6][phrase_step]
+        save_note(note, modifier, cc, channel)
 
-def save_note(note, modifier, channel):
+def save_note(note, modifier, cc, channel):
     
     current_notes_buffer[channel] = note
     current_modifier_buffer[channel] = modifier
+    current_cc_buffer[channel] = cc
+
 
     last_notes_buffer[channel] = note
 
-def play_notes(notes,modifiers):
+def play_notes(notes, modifiers, cc):
     for channel in range(MAX_CHANNELS):
+        if cc[channel][0] != None and cc[channel][1] != None:
+            outport.send(Message('control_change', channel=channel, control=cc[channel][0], value=cc[channel][1]))
+
         if notes[channel] != None:
             if modifiers[channel][0] == None:
                 outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
@@ -717,7 +729,7 @@ def main(stdscr):
             stdscr.addstr("                          ")
 
             # DATA
-            channels = 2
+            channels = MAX_CHAIN_PARAMETERS
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps,large_step=10)
             draw_column_no(stdscr,steps,chain_step)
@@ -727,15 +739,15 @@ def main(stdscr):
             # PHRASE VIEW
             # Header
             stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_phrase:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MODValue",curses.A_REVERSE | shift_mod_color)
-            stdscr.addstr("                          ")
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD▒▒▒▒ PC ▒▒▒▒ CC ▒▒▒▒",curses.A_REVERSE | shift_mod_color)
+            
 
             # DATA
-            channels = 3
+            channels = MAX_PHRASE_PARAMETERS
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
             draw_column_no(stdscr,steps,phrase_step)
-            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod','int'])
+            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
