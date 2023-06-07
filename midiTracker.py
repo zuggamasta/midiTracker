@@ -780,5 +780,7 @@ def main(stdscr):
 
         stdscr.refresh()
 
-wrapper(main)
+# Make sure that the app is only executed as script
+if __name__ == "__main__":
+    wrapper(main)
 
