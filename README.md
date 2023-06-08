@@ -31,7 +31,7 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 
 ## Keyboard Controls:
 
-These is the keymap wich comes with midiTracker, you can change the assingment of keys in the top of the file.
+This is the keymap which midiTracker has preconfigured, you can change the assingment of keys in the top of the main miditracker.py file.
 
 ### Change Screens
 
