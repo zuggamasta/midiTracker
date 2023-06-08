@@ -32,14 +32,13 @@ MAX_CHAIN_PARAMETERS = 2
 MAX_PHRASE_PARAMETERS = 7
 
 
-
 # USER EDITABLE CONSTANTS
 MAX_CHANNELS = 8        # DEFAULT = 8
 MAX_SONG_STEPS = 8      # DEFAULT = 8
 MAX_CHAIN_STEPS = 4     # DEFAULT = 4
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
-SUB_STEPS = 8           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
+SUB_STEPS = 4           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
 
 # TEXT ELEMENTS
 INTRO_TEXT = ("\n                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
@@ -122,7 +121,7 @@ song_data = [[[None for _ in range(MAX_SONG_STEPS)] for _ in range(MAX_CHANNELS)
 
 # CHAINS DATA
 current_chain = 0
-chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)] for _ in range(MAX_CHAIN_PARAMETERS)] for i in range(MAX_MIDI)] # phrase | transpose
+chain_data = [[[i for _ in range(MAX_CHAIN_STEPS)],[None for _ in range(MAX_CHAIN_STEPS)]]  for i in range(MAX_MIDI)] # phrase | transpose
 
 # PHRASES DATA
 current_phrase = 0
@@ -482,7 +481,7 @@ def draw_help(help_text):
     if help_scroll > len(help_text):
         help_scroll = 0
 
-def play_song(song, scr):
+def play_song(song):
     global song_step
     global chain_step
     global phrase_step
@@ -525,16 +524,22 @@ def play_song(song, scr):
 
 def play_chain(chain_no,channel):
     global chain_step 
-    phrase = chain_data[chain_no][0][chain_step]        
+    phrase = chain_data[chain_no][0][chain_step]
+    transpose = chain_data[chain_no][1][chain_step]
+    if transpose == None: transpose = 0
+
     if phrase !=  None:
-        play_phrase(phrase, channel)
+        play_phrase(phrase,transpose, channel)
     else:
         pass
 
-def play_phrase(phrase_no,channel):
+def play_phrase(phrase_no,transpose, channel):
     global phrase_step
     if phrase_step < MAX_PHRASE_STEPS:
         note = phrase_data[phrase_no][0][phrase_step]
+        if note != None:
+            note += transpose
+            note = note%127
         modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
         cc = phrase_data[phrase_no][5][phrase_step],phrase_data[phrase_no][6][phrase_step]
         save_note(note, modifier, cc, channel)
@@ -777,7 +782,7 @@ def main(stdscr):
             pass
         
         if is_song_playing:
-            play_song(0,stdscr)
+            play_song(0)
 
 
         if shift_mod_a:
