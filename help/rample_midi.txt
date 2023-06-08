@@ -1,0 +1,30 @@
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔ RAMPLE ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+Voice paramter changes:
+CC   SLOT ACTION    VALUES
+CCx0 SPx  pitch     63 = no pitch
+CCx1 SPx  bits      63 = no bitchrush
+CCx2 SPx  filter    63 = no filter
+CCx3 SPx  freeze    63 = no freeze
+CCx4 SPx  start pnt  0 = default 
+CCx5 SPx  length   127 = default leng
+CCx6 SPx  env       63 = no envelope 
+CCx7 SPx  runmode   63 = one shot
+CCx8 SPx  level     63 = no drive
+CCx9 SPx  layer      0 = first layer
+
+Advanced midi messages:
+CC60 All  layer mode  0 to 4
+CC6x SPx  layer mode  0 to 4
+CC70 All  randomize parameters
+CC7x SPx  randomize parameters
+CC80 All  reset paramters
+CC8x All  reset paramters
+
+Kit select messages:
+ CC99 bank select     0 to 25
+ CC 0 kit select      0 to 99
+CC100 previous kit   any
+CC101 next kit       any
+
+
+Where x is the sample number, from 1 to 4. For example CC10 controls the pitch of SP1 and CC38 controlls the level of SP3. you can also use x = 5 to set all sample values (e.g. the filter of all voices) at the same time

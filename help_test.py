@@ -1,8 +1,13 @@
+import time
+
 import curses
 from curses import wrapper
 
+i = 0
 
 def main(stdscr):
+
+	global i
 
 	height,width = stdscr.getmaxyx()
 
@@ -15,8 +20,11 @@ def main(stdscr):
 	pad.addstr(info_rample)
 	
 	stdscr.refresh()
+	while i < 100:
+		pad.refresh(i,0,0,0,height-1,width)
+		i += 1;
+		time.sleep(0.33)
 
-	pad.refresh(0,0,0,0,height-1,width)
 
 	stdscr.getch()
 
