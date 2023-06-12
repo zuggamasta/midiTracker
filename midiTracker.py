@@ -13,6 +13,7 @@ from mido import Message
 # CURSES MODULE, Interface rendering
 import curses
 from curses import wrapper
+from curses import panel
 
 ################################
 #          CONSTANTS           #
@@ -38,7 +39,7 @@ MAX_SONG_STEPS = 8      # DEFAULT = 8
 MAX_CHAIN_STEPS = 4     # DEFAULT = 4
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
-SUB_STEPS = 4           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
+SUB_STEPS = 8           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
 
 # TEXT ELEMENTS
 INTRO_TEXT = ("\n                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
@@ -75,6 +76,11 @@ KEYMAP = {
 # LAYOUT
 STEP_INFO_Y, STEP_INFO_X = 5, 2 + MAX_CHANNELS*SLOT_WIDTH + 2
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
+
+# PROFILING
+time_last = 0
+time_now = 0
+
 
 ################################
 #          VARIABLES           #
@@ -465,8 +471,8 @@ def draw_data(scr,data,max_column,max_row,render_style=['int' for _ in range(MAX
             else:
                 data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
 
-    scr.refresh()
     data_win.refresh()
+
 
 def draw_help(help_text):
     if not is_show_help:
@@ -626,7 +632,14 @@ def draw_intro(scr):
     time.sleep(1.033)
     scr.clear()
 
-def draw_step_info(scr,y_pos,x_pos):
+def draw_step_info(scr,y_pos,x_pos,midiport):
+        
+         # draw global infos, these are always on screen.
+        scr.addstr(TABLE_HEADER_Y,x_pos,f"BPM: {bpm}")
+        scr.addstr(TABLE_HEADER_Y+1,x_pos, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
+
+
+
         scr.attron(shift_mod_color | curses.A_STANDOUT)
         
         scr.addstr(y_pos+0,x_pos,f"song_step:   {song_step:02}")
@@ -655,6 +668,9 @@ def main(stdscr):
     global shift_mod_a
     global shift_mod_b
 
+    global time_last
+    global time_now
+
     global bpm
     global outport
     outport = None
@@ -670,8 +686,9 @@ def main(stdscr):
     load_state(autoload=True)   # Load 'savestate.json'
 
     # This keeps the app running 
-    while True:                 
+    while True:
         
+
         # is_dirty get set everytime an input changes the screen
         if is_dirty:           
             stdscr.erase()
@@ -695,8 +712,7 @@ def main(stdscr):
             
             stdscr.clear()
 
-        # draw global infos, these are always on screen.
-        stdscr.addstr(0,2,f"BPM:{bpm} | Device: {available_ports[MIDI_PORT][0:24]}")   # BPM and Midi port
+       
 
         # blinking dot to show that the program is working
         if is_song_playing:
@@ -708,8 +724,7 @@ def main(stdscr):
             stdscr.addstr(2,0, "  ", )
 
         # draw Playback info of song, chain and phrase step
-        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X)                          
-
+        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X,available_ports[MIDI_PORT])                          
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -744,7 +759,7 @@ def main(stdscr):
             # PHRASE VIEW
             # Header
             stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_phrase:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD▒▒▒▒ PC ▒▒▒▒ CC ▒▒▒▒",curses.A_REVERSE | shift_mod_color)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD▒▒▒▒PRGC▒▒▒▒ CC ▒▒▒▒",curses.A_REVERSE | shift_mod_color)
             
 
             # DATA
@@ -772,7 +787,7 @@ def main(stdscr):
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
             stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
-            stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Groove/Swing")
+            stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Enable/Disable CC & PRGC")
             stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
 
             stdscr.refresh()
@@ -780,7 +795,7 @@ def main(stdscr):
         else:
             # fallback in case a non available screen number gets selected error happens
             pass
-        
+
         if is_song_playing:
             play_song(0)
 
@@ -794,6 +809,7 @@ def main(stdscr):
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"-> Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
             stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"  Mod2  ")
+
 
         stdscr.refresh()
 
