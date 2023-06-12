@@ -677,7 +677,7 @@ def draw_step_info(win,midiport):
         
         i+=1
         if shift_mod_b:
-            win.addstr(i,j,f" ► Mod2 ", SECONDARY | curses.A_REVERSE)
+            win.addstr(i,j,f" ▶ Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
             win.addstr(i,j,f"  Mod2  ")
         

@@ -21,7 +21,7 @@ def main(stdscr):
 	
 	stdscr.refresh()
 	while i < 100:
-		pad.refresh(i,0,0,0,height-1,width)
+		pad.refresh(i,0,0,0,height-1,width-1)
 		i += 1;
 		time.sleep(0.33)
 
