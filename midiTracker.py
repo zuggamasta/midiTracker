@@ -74,8 +74,11 @@ KEYMAP = {
     }
 
 # LAYOUT
-STEP_INFO_Y, STEP_INFO_X = 8, 2 + MAX_CHANNELS*SLOT_WIDTH + 3
-TABLE_HEADER_Y, TABLE_HEADER_X = 4, 4
+CENTER_GAP = 6
+TABLE_HEADER_Y, TABLE_HEADER_X = 2, 3
+STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
+
+
 
 # PROFILING
 time_last = 0
@@ -632,42 +635,50 @@ def draw_intro(scr):
 def draw_step_info(win,midiport):
         
         win.border()
-        
+        i,j = 1,1
+
+
+        # blinking dot to show that the program is working
+        if is_song_playing:
+            if phrase_step % 2 == 0:
+                win.addstr(i,j, "  ", curses.A_REVERSE | shift_mod_color)
+            else:
+                win.addstr(i,j, "  ", )
+        else:
+            win.addstr(i,j, "  ", )
 
          # draw global infos, these are always on screen.
-        win.addstr(1,3,f"BPM: {bpm}")
-        win.addstr(2,1, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
-
+        win.addstr(i,j+3,f"BPM: {bpm}")
+        i+=1
+        win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
+        i+=3
         
 
         win.attron(shift_mod_color | curses.A_STANDOUT)
         
-        win.addstr(3,1,f"song_step:   {song_step:02}")
-        win.addstr(4,1,f"chain_step:  {chain_step:02}")
-        win.addstr(5,1,f"phrase_step: {phrase_step:02}")
-        
+        win.addstr(i,j,f"song_step:   {song_step:02}")
+        i+=1
+        win.addstr(i,j,f"chain_step:  {chain_step:02}")
+        i+=1
+        win.addstr(i,j,f"phrase_step: {phrase_step:02}")
+        i+=3
+
         win.attroff(shift_mod_color | curses.A_STANDOUT)
 
 
         if shift_mod_a:
-            win.addstr(6,1,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
+            win.addstr(i,j,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
         else:
-            win.addstr(6,1,f"  Mod1  ")
+            win.addstr(i,j,f"  Mod1  ")
         
+        i+=1
         if shift_mod_b:
-            win.addstr(7,1,f" ► Mod2 ", SECONDARY | curses.A_REVERSE)
+            win.addstr(i,j,f" ► Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
-            win.addstr(7,1,f"  Mod2  ")
+            win.addstr(i,j,f"  Mod2  ")
         
         
-        # blinking dot to show that the program is working
-        if is_song_playing:
-            if phrase_step % 2 == 0:
-                win.addstr(1,1, "  ", curses.A_REVERSE | shift_mod_color)
-            else:
-                win.addstr(1,1, "  ", )
-        else:
-            win.addstr(1,1, "  ", )
+        
         
         
         
@@ -717,6 +728,7 @@ def main(stdscr):
     # This keeps the app running 
     while True:
         
+        
 
         # is_dirty get set everytime an input changes the screen
         if is_dirty:           
@@ -740,19 +752,15 @@ def main(stdscr):
                 outport = None
             
             stdscr.clear()
-
-       
-
-        
-
                           
+
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
             # SONG VIEW
             # Header
             
-            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_song:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_song:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"{HEADER_STRING}",curses.A_REVERSE | shift_mod_color)
             
             # DATA
@@ -762,10 +770,11 @@ def main(stdscr):
             draw_column_no(column_win,steps,song_step)
             draw_data(data_win,song_data,channels,steps)
             draw_help(HELP_TEXT_SONG)
+
         elif current_screen == 1:
             # CHAIN VIEW
             # Header
-            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_chain:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_chain:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"PhrsTrsp",curses.A_REVERSE | shift_mod_color)
             stdscr.addstr("                          ")
 
@@ -779,7 +788,7 @@ def main(stdscr):
         elif current_screen == 2:
             # PHRASE VIEW
             # Header
-            stdscr.addstr(1,2,f"{SCREENS[current_screen]} {current_phrase:02}      ")
+            stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_phrase:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD▒▒▒▒PRGC▒▒▒▒ CC ▒▒▒▒",curses.A_REVERSE | shift_mod_color)
             
 
@@ -794,7 +803,7 @@ def main(stdscr):
         elif current_screen == 3:
             # CONFIG VIEW
             # Header            
-            stdscr.addstr(1,2,f"{SCREENS[current_screen]}    ")
+            stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]}    ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Value:     Settings      ",curses.A_REVERSE | shift_mod_color)
 
             # DATA
@@ -822,8 +831,6 @@ def main(stdscr):
 
         if is_song_playing:
             play_song(0)
-
-
 
         stdscr.refresh()
 
