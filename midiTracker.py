@@ -35,7 +35,7 @@ MAX_PHRASE_PARAMETERS = 7
 
 # USER EDITABLE CONSTANTS
 MAX_CHANNELS = 8        # DEFAULT = 8
-MAX_SONG_STEPS = 8      # DEFAULT = 8
+MAX_SONG_STEPS = 16      # DEFAULT = 8
 MAX_CHAIN_STEPS = 4     # DEFAULT = 4
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
@@ -74,8 +74,8 @@ KEYMAP = {
     }
 
 # LAYOUT
-STEP_INFO_Y, STEP_INFO_X = 5, 2 + MAX_CHANNELS*SLOT_WIDTH + 2
-TABLE_HEADER_Y, TABLE_HEADER_X = 2, 2
+STEP_INFO_Y, STEP_INFO_X = 8, 2 + MAX_CHANNELS*SLOT_WIDTH + 3
+TABLE_HEADER_Y, TABLE_HEADER_X = 4, 4
 
 # PROFILING
 time_last = 0
@@ -442,8 +442,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     return cursor
 
-def draw_data(scr,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)]):
-    data_win = curses.newwin(max_row,max_column*4+2,3,2)
+def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)]):
 
     for row in range(max_row):
         for column in range(max_column):
@@ -603,17 +602,15 @@ def panic():
         for note in range(MAX_MIDI):
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
-def draw_column_no(scr,columns,step):
-    header_win = curses.newwin(columns+1,2,3,0)
+def draw_column_no(win,columns,step):
 
     for frame in range(columns):
         if frame == step:
-            header_win.addstr(frame, 0, f"{frame:02}", shift_mod_color)
+            win.addstr(frame, 0, f"{frame:02}", shift_mod_color)
         else:
-            header_win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
+            win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
 
-    scr.refresh()
-    header_win.refresh()
+    win.refresh()
 
 def draw_intro(scr):
     global HEIGHT
@@ -632,22 +629,50 @@ def draw_intro(scr):
     time.sleep(1.033)
     scr.clear()
 
-def draw_step_info(scr,y_pos,x_pos,midiport):
+def draw_step_info(win,midiport):
         
+        win.border()
+        
+
          # draw global infos, these are always on screen.
-        scr.addstr(TABLE_HEADER_Y,x_pos,f"BPM: {bpm}")
-        scr.addstr(TABLE_HEADER_Y+1,x_pos, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
+        win.addstr(1,3,f"BPM: {bpm}")
+        win.addstr(2,1, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
 
-
-
-        scr.attron(shift_mod_color | curses.A_STANDOUT)
         
-        scr.addstr(y_pos+0,x_pos,f"song_step:   {song_step:02}")
-        scr.addstr(y_pos+1,x_pos,f"chain_step:  {chain_step:02}")
-        scr.addstr(y_pos+2,x_pos,f"phrase_step: {phrase_step:02}")
-        
-        scr.attroff(shift_mod_color | curses.A_STANDOUT)
 
+        win.attron(shift_mod_color | curses.A_STANDOUT)
+        
+        win.addstr(3,1,f"song_step:   {song_step:02}")
+        win.addstr(4,1,f"chain_step:  {chain_step:02}")
+        win.addstr(5,1,f"phrase_step: {phrase_step:02}")
+        
+        win.attroff(shift_mod_color | curses.A_STANDOUT)
+
+
+        if shift_mod_a:
+            win.addstr(6,1,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
+        else:
+            win.addstr(6,1,f"  Mod1  ")
+        
+        if shift_mod_b:
+            win.addstr(7,1,f" ► Mod2 ", SECONDARY | curses.A_REVERSE)
+        else:
+            win.addstr(7,1,f"  Mod2  ")
+        
+        
+        # blinking dot to show that the program is working
+        if is_song_playing:
+            if phrase_step % 2 == 0:
+                win.addstr(1,1, "  ", curses.A_REVERSE | shift_mod_color)
+            else:
+                win.addstr(1,1, "  ", )
+        else:
+            win.addstr(1,1, "  ", )
+        
+        
+        
+        win.refresh()
+ 
 def setup_colors():
 
 
@@ -685,6 +710,10 @@ def main(stdscr):
 
     load_state(autoload=True)   # Load 'savestate.json'
 
+    info_win = curses.newwin(19,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
+    data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
+    column_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
+
     # This keeps the app running 
     while True:
         
@@ -714,17 +743,9 @@ def main(stdscr):
 
        
 
-        # blinking dot to show that the program is working
-        if is_song_playing:
-            if phrase_step % 2 == 0:
-                stdscr.addstr(2,0, "  ", curses.A_REVERSE | shift_mod_color)
-            else:
-                stdscr.addstr(2,0, "  ", )
-        else:
-            stdscr.addstr(2,0, "  ", )
+        
 
-        # draw Playback info of song, chain and phrase step
-        draw_step_info(stdscr,STEP_INFO_Y,STEP_INFO_X,available_ports[MIDI_PORT])                          
+                          
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -738,8 +759,8 @@ def main(stdscr):
             channels = MAX_CHANNELS
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps,large_step=10)
-            draw_column_no(stdscr,steps,song_step)
-            draw_data(stdscr,song_data,channels,steps)
+            draw_column_no(column_win,steps,song_step)
+            draw_data(data_win,song_data,channels,steps)
             draw_help(HELP_TEXT_SONG)
         elif current_screen == 1:
             # CHAIN VIEW
@@ -752,8 +773,8 @@ def main(stdscr):
             channels = MAX_CHAIN_PARAMETERS
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps,large_step=10)
-            draw_column_no(stdscr,steps,chain_step)
-            draw_data(stdscr,chain_data,channels,steps,render_style=['int','int'])
+            draw_column_no(column_win,steps,chain_step)
+            draw_data(data_win,chain_data,channels,steps,render_style=['int','int'])
             draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
@@ -766,8 +787,8 @@ def main(stdscr):
             channels = MAX_PHRASE_PARAMETERS
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
-            draw_column_no(stdscr,steps,phrase_step)
-            draw_data(stdscr,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
+            draw_column_no(column_win,steps,phrase_step)
+            draw_data(data_win,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
@@ -780,9 +801,9 @@ def main(stdscr):
             channels = 1
             steps = MAX_CONFIG_STEPS
             update_input(stdscr,config_data,channels,steps,max_value=512,large_step=10)
-            draw_column_no(stdscr,steps,99)
+            draw_column_no(column_win,steps,99)
 
-            draw_data(stdscr,config_data,channels,steps,render_style=['int'])
+            draw_data(data_win,config_data,channels,steps,render_style=['int'])
             draw_help(HELP_TEXT_CONFIG)
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
@@ -796,19 +817,12 @@ def main(stdscr):
             # fallback in case a non available screen number gets selected error happens
             pass
 
+        # draw Playback info of song, chain and phrase step
+        draw_step_info(info_win,available_ports[MIDI_PORT])        
+
         if is_song_playing:
             play_song(0)
 
-
-        if shift_mod_a:
-            stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"-> Mod1 ", PRIMARY | curses.A_REVERSE)
-        else:
-            stdscr.addstr(STEP_INFO_Y+4,STEP_INFO_X,f"  Mod1  ")
-        
-        if shift_mod_b:
-            stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"-> Mod2 ", SECONDARY | curses.A_REVERSE)
-        else:
-            stdscr.addstr(STEP_INFO_Y+5,STEP_INFO_X,f"  Mod2  ")
 
 
         stdscr.refresh()
