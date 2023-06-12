@@ -74,8 +74,8 @@ KEYMAP = {
     }
 
 # LAYOUT
-CENTER_GAP = 6
-TABLE_HEADER_Y, TABLE_HEADER_X = 2, 3
+CENTER_GAP = 10
+TABLE_HEADER_Y, TABLE_HEADER_X = 2, 4
 STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
 
 
@@ -483,6 +483,7 @@ def draw_help(help_text):
     help_pad = curses.newpad(1,512) # 512 is just a large number, this should be the max of helptext length * 2
     help_pad.addstr(help_text, shift_mod_color | curses.A_REVERSE)
     help_pad.addstr(help_text, shift_mod_color | curses.A_REVERSE)
+    help_pad.addstr(help_text, shift_mod_color | curses.A_REVERSE)
 
     help_pad.refresh(0,int(help_scroll),HEIGHT-1,0,HEIGHT-1,WIDTH-1)
     help_scroll += 0.1
@@ -626,7 +627,10 @@ def draw_intro(scr):
     pad.addstr(INTRO_TEXT, curses.A_BOLD | PRIMARY )
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
-        scr.addstr(0,0,"v0.1", curses.A_BOLD | PRIMARY )
+        # draw version no on top left
+        scr.addstr(0,0,f"v0.1")
+        # draw terminal size on bottom right
+        scr.addstr(HEIGHT-1,WIDTH-2-len(str(WIDTH)+str(HEIGHT)),f"{HEIGHT}×{WIDTH}")
         scr.refresh()
         time.sleep(0.033)
     time.sleep(1.033)
@@ -721,7 +725,7 @@ def main(stdscr):
 
     load_state(autoload=True)   # Load 'savestate.json'
 
-    info_win = curses.newwin(19,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
+    info_win = curses.newwin(18,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
     data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
     column_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
 
