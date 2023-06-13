@@ -123,6 +123,7 @@ active_phrase_buffer = []
 song_step = 0
 chain_step = 0
 phrase_step = 0
+loop_length = 8
 
 # SONG DATA
 current_song = 0
@@ -139,7 +140,7 @@ phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(MAX_PHRAS
 # CONFIG DATA
 current_config = 0
 config_data = []
-config=  [[0x01,120,0xff,0xab],["Midi Device","BPM",0xff,0xab] ]  
+config=  [[0x01,120,8,0xab],["Midi Device","BPM","loop_length","not yet defined"] ]  
 config_data.append(config)
 
 def draw_debug(scr,value):
@@ -445,7 +446,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     return cursor
 
-def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)]):
+def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
 
     for row in range(max_row):
         for column in range(max_column):
@@ -471,7 +472,10 @@ def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in rang
             if row == cursor[1] and column == cursor[0]:
                 data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
             else:
-                data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
+                if is_song and row >= loop_length:
+                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_DIM)
+                else:
+                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
 
     data_win.refresh()
 
@@ -527,7 +531,7 @@ def play_song(song):
         chain_step = 0
         song_step +=1
     
-    if song_step >= MAX_SONG_STEPS:
+    if song_step >= loop_length:
         song_step = 0
 
 
@@ -606,13 +610,17 @@ def panic():
         for note in range(MAX_MIDI):
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
-def draw_column_no(win,columns,step):
+def draw_row_no(win,rows,step,is_song=False):
 
-    for frame in range(columns):
-        if frame == step:
-            win.addstr(frame, 0, f"{frame:02}", shift_mod_color)
+    for current_row in range(rows):
+        if current_row == step:
+            win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color)
         else:
-            win.addstr(frame, 0, f"{frame:02}", curses.A_REVERSE | shift_mod_color)
+            if is_song and current_row >= loop_length:
+                win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color | curses.A_DIM)
+            else:
+                win.addstr(current_row, 0, f"{current_row:02}", curses.A_REVERSE | shift_mod_color)
+
 
     win.refresh()
 
@@ -636,7 +644,7 @@ def draw_intro(scr):
     time.sleep(1.033)
     scr.clear()
 
-def draw_step_info(win,midiport):
+def draw_info(win,midiport):
         
         win.border()
         i,j = 1,1
@@ -652,19 +660,24 @@ def draw_step_info(win,midiport):
             win.addstr(i,j, "  ", )
 
          # draw global infos, these are always on screen.
-        win.addstr(i,j+3,f"BPM: {bpm}")
+        win.addstr(i,j+3,f"    BPM: {bpm:03}")
         i+=1
         win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
         i+=3
         
 
         win.attron(shift_mod_color | curses.A_STANDOUT)
-        
-        win.addstr(i,j,f"song_step:   {song_step:02}")
+
+       
+        win.addstr(i,j,f"Song Step:   {song_step:02}")
         i+=1
-        win.addstr(i,j,f"chain_step:  {chain_step:02}")
+        win.addstr(i,j,f"Chain Step:  {chain_step:02}")
         i+=1
-        win.addstr(i,j,f"phrase_step: {phrase_step:02}")
+        win.addstr(i,j,f"Phrase Step: {phrase_step:02}")
+        i+=1
+        win.addstr(i,j,f"               ")
+        i+=1
+        win.addstr(i,j,f"Loop Length: {loop_length:02}")
         i+=3
 
         win.attroff(shift_mod_color | curses.A_STANDOUT)
@@ -712,6 +725,7 @@ def main(stdscr):
     global time_now
 
     global bpm
+    global loop_length
     global outport
     outport = None
 
@@ -727,7 +741,7 @@ def main(stdscr):
 
     info_win = curses.newwin(18,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
     data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
-    column_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
+    row_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
 
     # This keeps the app running 
     while True:
@@ -741,6 +755,12 @@ def main(stdscr):
         # make sure that the songs bpm equals the bpm from the config data
         if bpm != config_data[0][0][1]:    
             bpm = config_data[0][0][1]
+
+        if loop_length != config_data[0][0][2]:  
+            if config_data[0][0][2] > MAX_SONG_STEPS:
+                config_data[0][0][2] = MAX_SONG_STEPS
+                  
+            loop_length = config_data[0][0][2]
 
         # Make sure to setup a Midiport
         if outport == None or MIDI_PORT != config_data[0][0][0]:
@@ -771,8 +791,8 @@ def main(stdscr):
             channels = MAX_CHANNELS
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps,large_step=10)
-            draw_column_no(column_win,steps,song_step)
-            draw_data(data_win,song_data,channels,steps)
+            draw_row_no(row_win,steps,song_step,is_song = True)
+            draw_data(data_win,song_data,channels,steps,is_song = True)
             draw_help(HELP_TEXT_SONG)
 
         elif current_screen == 1:
@@ -786,21 +806,21 @@ def main(stdscr):
             channels = MAX_CHAIN_PARAMETERS
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps,large_step=10)
-            draw_column_no(column_win,steps,chain_step)
+            draw_row_no(row_win,steps,chain_step)
             draw_data(data_win,chain_data,channels,steps,render_style=['int','int'])
             draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
             # Header
             stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_phrase:02}      ")
-            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD▒▒▒▒PRGC▒▒▒▒ CC ▒▒▒▒",curses.A_REVERSE | shift_mod_color)
+            stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD valPRGC val CC  val",curses.A_REVERSE | shift_mod_color)
             
 
             # DATA
             channels = MAX_PHRASE_PARAMETERS
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
-            draw_column_no(column_win,steps,phrase_step)
+            draw_row_no(row_win,steps,phrase_step)
             draw_data(data_win,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
             draw_help(HELP_TEXT_PHRASE)
 
@@ -814,14 +834,14 @@ def main(stdscr):
             channels = 1
             steps = MAX_CONFIG_STEPS
             update_input(stdscr,config_data,channels,steps,max_value=512,large_step=10)
-            draw_column_no(column_win,steps,99)
+            draw_row_no(row_win,steps,99)
 
             draw_data(data_win,config_data,channels,steps,render_style=['int'])
             draw_help(HELP_TEXT_CONFIG)
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
             stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
-            stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Enable/Disable CC & PRGC")
+            stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Loop Length")
             stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
 
             stdscr.refresh()
@@ -831,7 +851,7 @@ def main(stdscr):
             pass
 
         # draw Playback info of song, chain and phrase step
-        draw_step_info(info_win,available_ports[MIDI_PORT])        
+        draw_info(info_win,available_ports[MIDI_PORT])        
 
         if is_song_playing:
             play_song(0)
