@@ -762,8 +762,8 @@ def draw_visualizer(win,render_style="tet"):
                 
                 if( visualizer_buffer[0][channel] > HEIGHT-2 ): visualizer_buffer[0][channel] = 1
                 if( visualizer_buffer[0][channel] < 1 ): visualizer_buffer[0][channel] = HEIGHT-2
-                if( visualizer_buffer[1][channel] > WIDTH-6 ): visualizer_buffer[1][channel] = 1
-                if( visualizer_buffer[1][channel] < 1 ): visualizer_buffer[1][channel] = WIDTH-6
+                if( visualizer_buffer[1][channel] > WIDTH-7 ): visualizer_buffer[1][channel] = 1
+                if( visualizer_buffer[1][channel] < 1 ): visualizer_buffer[1][channel] = WIDTH-7
 
         
         if sub_step == 0:
