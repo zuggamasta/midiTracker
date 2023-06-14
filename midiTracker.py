@@ -739,9 +739,9 @@ def draw_visualizer(win,render_style="tet"):
     color = None
     if song_step%3==0: color = PRIMARY
     if song_step%3==1: color = SECONDARY
-    if song_step%3==2: color = None
+    if song_step%3==2: color = 0
 
-    win.attron(color | curses.A_REVERSE)
+    win.attron(color | curses.A_BOLD)
 
     for channel in range (MAX_CHANNELS):
         note_val = current_notes_buffer[channel]
@@ -772,7 +772,7 @@ def draw_visualizer(win,render_style="tet"):
         if sub_step == 0:
             win.refresh()
     
-    win.attroff(color | curses.A_REVERSE)
+    win.attroff(color | curses.A_BOLD)
 
     is_dirty = False
 
