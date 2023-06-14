@@ -19,7 +19,7 @@ from curses import panel
 #          CONSTANTS           #
 ################################
 
-SCREENS = ["SONG","CHAIN","PHRASE","CONFIG"]
+SCREENS = ["SONG","CHAIN","PHRASE","CONFIG","VISUALIZER"]
 
 MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg","PC1"]
 MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
@@ -67,6 +67,7 @@ KEYMAP = {
     "chain":    "2",
     "phrase":   "3",
     "config":   "4",
+    "visualizer":"5",
     "help":     "h",
     "copy":     "c",
     "paste":    "v",
@@ -113,7 +114,7 @@ midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
 current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
 current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
 current_cc_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
-
+visualizer_buffer = None
 
 last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
 active_chain_buffer = []
@@ -299,21 +300,22 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     elif current_screen == 3:
         active_data == current_config
 
-    if key == "1":
+    if key == KEYMAP["song"]:
         current_screen = 0
         shift_mod_a, shift_mod_b = False, False
-    elif key == "2":
+    elif key == KEYMAP["chain"]:
         current_screen = 1
         shift_mod_a, shift_mod_b = False, False
-    elif key == "3":
+    elif key == KEYMAP["phrase"]:
         current_screen = 2
         shift_mod_a, shift_mod_b = False, False
-    elif key == "4":
+    elif key == KEYMAP["config"]:
         current_screen = 3
         shift_mod_a, shift_mod_b = False, False
-    elif key == "5":
-        # current_screen = 4
-        pass
+    elif key == KEYMAP["visualizer"]:
+        current_screen = 4
+        shift_mod_a, shift_mod_b = False, False
+
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == KEYMAP["down"] and shift_mod_b:
@@ -627,7 +629,12 @@ def draw_row_no(win,rows,step,is_song=False):
 def draw_intro(scr):
     global HEIGHT
     global WIDTH
+    global visualizer_buffer
     HEIGHT,WIDTH = scr.getmaxyx()
+
+    visualizer_buffer = [[random.randint(0,HEIGHT-4) for _ in range(MAX_CHANNELS)],[random.randint(0,WIDTH-4) for _ in range(MAX_CHANNELS)] ]
+
+
 
     pad = curses.newpad(16,68)
     ANIMATION_START = 16
@@ -703,7 +710,6 @@ def draw_info(win,midiport):
  
 def setup_colors():
 
-
     global PRIMARY
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     PRIMARY = curses.color_pair(1)
@@ -715,6 +721,64 @@ def setup_colors():
     global TERTIARY
     curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_BLACK)
     TERTIARY = curses.color_pair(3)
+
+def update_visualizer(scr):
+    global current_screen
+    try:
+        key = scr.getkey()
+    except:
+        key = None
+
+    if key == KEYMAP["song"]:
+        current_screen = 0
+        scr.erase()
+
+def draw_visualizer(win,render_style="tet"):
+    global visualizer_buffer
+    global is_dirty
+    color = None
+    if song_step%3==0: color = PRIMARY
+    if song_step%3==1: color = SECONDARY
+    if song_step%3==2: color = None
+
+    win.attron(color | curses.A_REVERSE)
+
+    for channel in range (MAX_CHANNELS):
+        note_val = current_notes_buffer[channel]
+        if note_val == None: 
+            note_render = "    "
+            #win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"Chn{channel}")
+            win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render}")
+        else:
+
+            if render_style == 'tet':
+                note = NOTES_LOOKUP[int(note_val)%12]
+                octave = round(int(note_val/12)%12)+1
+                note_render = f" {note}{octave}"
+                #win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"Chn{channel}")
+                win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render}")
+        # win.addstr(phrase_step,channel*4,f"{note_render}")
+        if(sub_step == SUB_STEPS-1 ):
+                
+                visualizer_buffer[0][channel] += random.randint(0,1)
+                visualizer_buffer[1][channel] += random.randint(-1,1)
+                
+                if( visualizer_buffer[0][channel] > HEIGHT-2 ): visualizer_buffer[0][channel] = 1
+                if( visualizer_buffer[0][channel] < 1 ): visualizer_buffer[0][channel] = HEIGHT-2
+                if( visualizer_buffer[1][channel] > WIDTH-6 ): visualizer_buffer[1][channel] = 1
+                if( visualizer_buffer[1][channel] < 1 ): visualizer_buffer[1][channel] = WIDTH-6
+
+        
+        if sub_step == 0:
+            win.refresh()
+    
+    win.attroff(color | curses.A_REVERSE)
+
+    is_dirty = False
+
+ 
+        
+
 
 def main(stdscr):
 
@@ -738,11 +802,12 @@ def main(stdscr):
     draw_intro(stdscr)      # Play animated Intro
 
     load_state(autoload=True)   # Load 'savestate.json'
+    visualizer_win = curses.newwin(int(HEIGHT-1),int(WIDTH-1),0,0)
 
     info_win = curses.newwin(18,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
     data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
     row_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
-
+    
     # This keeps the app running 
     while True:
         
@@ -846,12 +911,15 @@ def main(stdscr):
 
             stdscr.refresh()
 
+        elif current_screen == 4:
+            draw_visualizer(visualizer_win)
+            update_visualizer(stdscr)
         else:
             # fallback in case a non available screen number gets selected error happens
             pass
 
         # draw Playback info of song, chain and phrase step
-        draw_info(info_win,available_ports[MIDI_PORT])        
+        if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
         if is_song_playing:
             play_song(0)
