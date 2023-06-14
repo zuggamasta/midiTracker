@@ -746,9 +746,7 @@ def draw_visualizer(win,render_style="tet"):
     for channel in range (MAX_CHANNELS):
         note_val = current_notes_buffer[channel]
         if note_val == None: 
-            note_render = "    "
-            #win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"Chn{channel}")
-            win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render}")
+            pass
         else:
 
             if render_style == 'tet':
