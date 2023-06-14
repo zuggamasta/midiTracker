@@ -753,8 +753,7 @@ def draw_visualizer(win,render_style="tet"):
                 note = NOTES_LOOKUP[int(note_val)%12]
                 octave = round(int(note_val/12)%12)+1
                 note_render = f" {note}{octave}"
-                #win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"Chn{channel}")
-                win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render}")
+                win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render} ")
         # win.addstr(phrase_step,channel*4,f"{note_render}")
         if(sub_step == SUB_STEPS-1 ):
                 
