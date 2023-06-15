@@ -34,7 +34,7 @@ MAX_PHRASE_PARAMETERS = 7
 
 
 # USER EDITABLE CONSTANTS
-MAX_CHANNELS = 8        # DEFAULT = 8
+MAX_CHANNELS = 8       # DEFAULT = 8
 MAX_SONG_STEPS = 16      # DEFAULT = 8
 MAX_CHAIN_STEPS = 4     # DEFAULT = 4
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
@@ -449,7 +449,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     return cursor
 
 def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
-
+    
     for row in range(max_row):
         for column in range(max_column):
             slot = data[active_data][column][row]
@@ -515,7 +515,10 @@ def play_song(song):
                     pass
         play_notes(current_notes_buffer,current_modifier_buffer,current_cc_buffer)
 
-    time.sleep(60/bpm/4/SUB_STEPS)
+    if (time_now-time_last) < (60/bpm/4/SUB_STEPS):
+        time.sleep((60/bpm/4/SUB_STEPS)-(time_now-time_last))
+    else:
+        time.sleep((60/bpm/4/SUB_STEPS))
 
     sub_step += 1
 
@@ -613,7 +616,7 @@ def panic():
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
 def draw_row_no(win,rows,step,is_song=False):
-
+    return
     for current_row in range(rows):
         if current_row == step:
             win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color)
@@ -622,8 +625,6 @@ def draw_row_no(win,rows,step,is_song=False):
                 win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color | curses.A_DIM)
             else:
                 win.addstr(current_row, 0, f"{current_row:02}", curses.A_REVERSE | shift_mod_color)
-
-
     win.refresh()
 
 def draw_intro(scr):
@@ -839,7 +840,7 @@ def main(stdscr):
             
             stdscr.clear()
                           
-
+        time_last = time.time()
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -918,8 +919,14 @@ def main(stdscr):
         # draw Playback info of song, chain and phrase step
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
+        time_now = time.time()
+        stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
+
+
+
         if is_song_playing:
             play_song(0)
+
 
         stdscr.refresh()
 
