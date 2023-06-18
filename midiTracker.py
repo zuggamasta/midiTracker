@@ -21,7 +21,7 @@ from curses import panel
 
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG","VISUALIZER"]
 
-MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg","PC1"]
+MODIFIERS_LOOKUP = ["Bck","Hld","Jmp","Rnd","Stc","Rtg","PC1"]
 MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
@@ -52,6 +52,46 @@ HEADER_STRING = "Chn1Chn2Chn3Chn4RmplChn6Chn7Chn8Chn9Ch10Ch11Ch12Ch13Ch14Ch15Ch1
 # INPUT
 KEYMAP = {
     "up" :      "KEY_UP",
+    "down":     "KEY_DOWN",
+    "left":     "KEY_LEFT",
+    "right":    "KEY_RIGHT",
+    "moda":     "a",
+    "modb":     "s",
+    "delete":   "x",
+    "quit":     "Q",
+    "save":     "S",
+    "panic":    "w",
+    "restart":  " ",
+    "help":     "h",
+    "song":     "1",
+    "chain":    "2",
+    "phrase":   "3",
+    "config":   "4",
+    "visualizer":"5",
+    "help":     "h",
+    "copy":     "c",
+    "paste":    "v",
+    "flood":    "V"
+    }
+# INPUT
+KEYMAP_NEW = {
+    "1" :  ["changeScreenTo","0"],
+    "2" :  ["changeScreenTo","1"],
+    "3" :  ["changeScreenTo","2"],
+    "4" :  ["changeScreenTo","3"],
+    "5" :  ["changeScreenTo","4"],
+    "w" :  ["panic","None"],
+    "q" :  ["quitApp","None"],
+    "S" :  ["save_state"," "],
+    "a" :  ["set_shiftmod","1"],
+    "s" :  ["set_shiftmod","2"],
+
+
+
+
+
+    
+    "KEY_UP" :  ["sampleFunc","sample arg","0"],
     "down":     "KEY_DOWN",
     "left":     "KEY_LEFT",
     "right":    "KEY_RIGHT",
@@ -107,6 +147,7 @@ is_dirty = False
 shift_mod_a = False
 shift_mod_b = False
 shift_mod_color = 0
+shift_mod = 0
 
 # BUFFERS
 copy_buffer = 0
@@ -119,6 +160,8 @@ visualizer_buffer = None
 last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
 active_chain_buffer = []
 active_phrase_buffer = []
+
+screen_buffer = ""
 
 # TRANSPORT
 song_step = 0
@@ -199,7 +242,7 @@ def load_state(autoload):
             # print("  not loading   ")
             pass
 
-def save_state():
+def save_state(arg):
 
     save_state_data = []
 
@@ -214,6 +257,46 @@ def save_state():
 
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
+
+
+def set_shiftmod(value):
+    global shift_mod_color
+    global shift_mod_a, shift_mod_b
+
+    shift_mod_color = int(value) * 256
+
+        
+    if int(value) == 1:
+        shift_mod_b = False
+        shift_mod_a = not shift_mod_a
+    elif int(value) == 2:
+        shift_mod_a = False
+        shift_mod_b = not shift_mod_b
+    
+
+def changeScreenTo(screen):
+    global current_screen
+    current_screen = int(screen)
+
+def panic():
+    for channel in range(MAX_CHANNELS):
+        for note in range(MAX_MIDI):
+            outport.send(Message('note_off', channel=channel, note=note, velocity=120))
+
+
+def quitApp(arg):
+    save_state_data = []
+
+    save_state_data.append(song_data)
+    save_state_data.append(chain_data)
+    save_state_data.append(phrase_data)
+    save_state_data.append(config_data)
+
+    with open(f"savestate.json", "w") as fp:
+        json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
+    
+    sys.exit()
+
 
 def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 12):
     global song_step
@@ -241,27 +324,15 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     try:
         key = scr.getkey()
+        globals()[str(KEYMAP_NEW[key][0])](KEYMAP_NEW[key][1])
+    
+    except SystemExit:
+        sys.exit()
+
     except:
         key = None
         is_dirty = False
 
-    if key == KEYMAP["moda"]:
-        if shift_mod_b:
-            shift_mod_b = False
-        shift_mod_a = not shift_mod_a
-
-    if key == KEYMAP["modb"]:
-        if shift_mod_a:
-            shift_mod_a = False
-        shift_mod_b = not shift_mod_b
-
-    if shift_mod_a:
-        shift_mod_color = PRIMARY
-    elif shift_mod_b:
-        shift_mod_color = SECONDARY
-    
-    if not shift_mod_a and not shift_mod_b:
-        shift_mod_color = 0
 
     if key == KEYMAP["copy"]:
         if current_screen == 3:
@@ -300,23 +371,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     elif current_screen == 3:
         active_data == current_config
 
-    if key == KEYMAP["song"]:
-        current_screen = 0
-        shift_mod_a, shift_mod_b = False, False
-    elif key == KEYMAP["chain"]:
-        current_screen = 1
-        shift_mod_a, shift_mod_b = False, False
-    elif key == KEYMAP["phrase"]:
-        current_screen = 2
-        shift_mod_a, shift_mod_b = False, False
-    elif key == KEYMAP["config"]:
-        current_screen = 3
-        shift_mod_a, shift_mod_b = False, False
-    elif key == KEYMAP["visualizer"]:
-        current_screen = 4
-        shift_mod_a, shift_mod_b = False, False
-
-
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == KEYMAP["down"] and shift_mod_b:
         # CHAIN SCREEN
@@ -346,8 +400,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     elif key == KEYMAP["help"]:
         is_show_help = not is_show_help
 
-    elif key == KEYMAP["panic"]:
-        panic()
+
 
     elif key == KEYMAP["restart"]:
         panic()
@@ -361,8 +414,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
     
-    elif key == KEYMAP["save"]:
-        save_state()
 
     # MODIFY DATA
     elif key == KEYMAP["up"] and shift_mod_a:
@@ -408,20 +459,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     # QUIT APPLICATION
 
     if key == KEYMAP["quit"]:
-            panic()
-
-            save_state_data = []
-
-            save_state_data.append(song_data)
-            save_state_data.append(chain_data)
-            save_state_data.append(phrase_data)
-            save_state_data.append(config_data)
-
-            with open(f"savestate.json", "w") as fp:
-                json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
-            
-            sys.exit()
-    else:
         pass
     
     # WRAP CURSOR AROUND
@@ -444,42 +481,54 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         if data[active_data][cursor[0]][cursor[1]] > max_value-1:
             data[active_data][cursor[0]][cursor[1]] = 0
     
-    scr.refresh()
-
     return cursor
 
-def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
-    
-    for row in range(max_row):
-        for column in range(max_column):
-            slot = data[active_data][column][row]
-            note = 0x0
-            render_slot = ""
-            if slot == None:
-                render_slot = " -- "
-            else:
-                if render_style[column] == 'tet':
-                    note = NOTES_LOOKUP[int(slot)%12]
-                    render_slot = f" {note}{round(int(slot/12)%12)+1}"
-                elif render_style[column] == 'hex':
-                    render_slot = f" {slot:02x} "
-                elif render_style[column] == 'int':
-                    render_slot = f" {slot:02} "
-                elif render_style[column] == 'str':
-                    render_slot = f" {slot} "
-                elif render_style[column] == 'mod':
-                    modifier = MODIFIERS_LOOKUP[int(slot)%MODIFIERS_LEN]
-                    render_slot = f"{modifier}" # warp around every modifier lookup character
+def draw_data(win,data,max_column,max_row,buffer,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
 
-            if row == cursor[1] and column == cursor[0]:
-                data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
-            else:
-                if is_song and row >= loop_length:
-                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_DIM)
+    if 1:
+        win.resize(max_row+1,max_column*4)
+
+
+        
+        for row in range(max_row):
+            
+            active = " "
+            for column in range(max_column):
+                if row == cursor[1] and column == cursor[0]:
+                    active = "*"
                 else:
-                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
+                    active = " "
 
-    data_win.refresh()
+                slot = data[active_data][column][row]
+                note = 0
+                render_slot = ""
+                if slot == None:
+                    render_slot = active + "-- "
+                else:
+                    if render_style[column] == 'tet':
+                        note = NOTES_LOOKUP[int(slot)%12]
+                        render_slot = f"{active}{note}{round(int(slot/12)%12)+1}"
+                    elif render_style[column] == 'hex':
+                        render_slot = f"{active}{slot:02x} "
+                    elif render_style[column] == 'int':
+                        render_slot = f"{active}{slot:03}"
+                    elif render_style[column] == 'str':
+                        render_slot = f"{active}{slot} "
+                    elif render_style[column] == 'mod':
+                        modifier = MODIFIERS_LOOKUP[int(slot)%MODIFIERS_LEN]
+                        render_slot = f"{active}{modifier}" # warp around every modifier lookup character
+                buffer += render_slot
+                #if row == cursor[1] and column == cursor[0]:
+                #    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
+                #else:
+                #    if is_song and row >= loop_length:
+                #        data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_DIM)
+                #    else:
+                #       data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
+    
+        win.addstr(0,0,buffer, curses.A_BOLD)
+    
+        win.refresh()
 
 
 def draw_help(help_text):
@@ -503,6 +552,7 @@ def play_song(song):
     global song_data
     global current_notes_buffer
     global sub_step
+    global is_dirty
 
     if(sub_step == 0):
         for song_channel in range(MAX_CHANNELS):
@@ -521,6 +571,7 @@ def play_song(song):
         time.sleep((60/bpm/4/SUB_STEPS))
 
     sub_step += 1
+
 
     if(sub_step >= SUB_STEPS):
         stop_notes(current_notes_buffer)
@@ -610,13 +661,8 @@ def stop_notes(notes):
 def play_rest():
     pass
     
-def panic():
-    for channel in range(MAX_CHANNELS):
-        for note in range(MAX_MIDI):
-            outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
 def draw_row_no(win,rows,step,is_song=False):
-    return
     for current_row in range(rows):
         if current_row == step:
             win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color)
@@ -654,61 +700,59 @@ def draw_intro(scr):
 
 def draw_info(win,midiport):
         
-        win.border()
-        i,j = 1,1
+    win.border()
+    i,j = 1,1
 
 
-        # blinking dot to show that the program is working
-        if is_song_playing:
-            if phrase_step % 2 == 0:
-                win.addstr(i,j, "  ", curses.A_REVERSE | shift_mod_color)
-            else:
-                win.addstr(i,j, "  ", )
+    # blinking dot to show that the program is working
+    if is_song_playing:
+        if phrase_step % 2 == 0:
+            win.addstr(i,j, "  ", curses.A_REVERSE | shift_mod_color)
         else:
             win.addstr(i,j, "  ", )
+    else:
+        win.addstr(i,j, "  ", )
 
-         # draw global infos, these are always on screen.
-        win.addstr(i,j+3,f"    BPM: {bpm:03}")
-        i+=1
-        win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
-        i+=3
-        
+        # draw global infos, these are always on screen.
+    win.addstr(i,j+3,f"    BPM: {bpm:03}")
+    i+=1
+    win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
+    i+=3
+    
 
-        win.attron(shift_mod_color | curses.A_STANDOUT)
+    #win.attron(shift_mod_color | curses.A_STANDOUT)
 
-       
-        win.addstr(i,j,f"Song Step:   {song_step:02}")
-        i+=1
-        win.addstr(i,j,f"Chain Step:  {chain_step:02}")
-        i+=1
-        win.addstr(i,j,f"Phrase Step: {phrase_step:02}")
-        i+=1
-        win.addstr(i,j,f"               ")
-        i+=1
-        win.addstr(i,j,f"Loop Length: {loop_length:02}")
-        i+=3
+    
+    win.addstr(i,j,f"Song Step:   {song_step:02}")
+    i+=1
+    win.addstr(i,j,f"Chain Step:  {chain_step:02}")
+    i+=1
+    win.addstr(i,j,f"Phrase Step: {phrase_step:02}")
+    i+=1
+    win.addstr(i,j,f"               ")
+    i+=1
+    win.addstr(i,j,f"Loop Length: {loop_length:02}")
+    i+=3
 
-        win.attroff(shift_mod_color | curses.A_STANDOUT)
+    #win.attroff(shift_mod_color | curses.A_STANDOUT)
 
 
-        if shift_mod_a:
-            win.addstr(i,j,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
-        else:
-            win.addstr(i,j,f"  Mod1  ")
-        
-        i+=1
-        if shift_mod_b:
-            win.addstr(i,j,f" ▶ Mod2 ", SECONDARY | curses.A_REVERSE)
-        else:
-            win.addstr(i,j,f"  Mod2  ")
-        
-        
-        
-        
+    if shift_mod_a:
+        win.addstr(i,j,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
+    else:
+        win.addstr(i,j,f"  Mod1  ")
+    
+    i+=1
+    if shift_mod_b:
+        win.addstr(i,j,f" ▶ Mod2 ", SECONDARY | curses.A_REVERSE)
+    else:
+        win.addstr(i,j,f"  Mod2  ")
+    
+    win.refresh()
         
         
-        win.refresh()
- 
+        
+         
 def setup_colors():
 
     global PRIMARY
@@ -803,18 +847,20 @@ def main(stdscr):
     visualizer_win = curses.newwin(int(HEIGHT-1),int(WIDTH-1),0,0)
 
     info_win = curses.newwin(18,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
-    data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
     row_win = curses.newwin(MAX_PHRASE_STEPS+1,2,TABLE_HEADER_Y+1,TABLE_HEADER_X-2) # needs _ACTUAL_ maximum amount of slots in MAX PHRASE STEPS
-    
+    data_win = curses.newwin(MAX_PHRASE_STEPS+1,MAX_CHANNELS*SLOT_WIDTH,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
+
     # This keeps the app running 
     while True:
         
         
 
         # is_dirty get set everytime an input changes the screen
-        if is_dirty:           
+        if is_dirty:
             stdscr.erase()
-        
+           
+            pass
+
         # make sure that the songs bpm equals the bpm from the config data
         if bpm != config_data[0][0][1]:    
             bpm = config_data[0][0][1]
@@ -838,7 +884,6 @@ def main(stdscr):
             except:
                 outport = None
             
-            stdscr.clear()
                           
         time_last = time.time()
 
@@ -855,7 +900,7 @@ def main(stdscr):
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps,large_step=10)
             draw_row_no(row_win,steps,song_step,is_song = True)
-            draw_data(data_win,song_data,channels,steps,is_song = True)
+            draw_data(data_win,song_data,channels,steps,screen_buffer,is_song = True)
             draw_help(HELP_TEXT_SONG)
 
         elif current_screen == 1:
@@ -870,7 +915,7 @@ def main(stdscr):
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps,large_step=10)
             draw_row_no(row_win,steps,chain_step)
-            draw_data(data_win,chain_data,channels,steps,render_style=['int','int'])
+            draw_data(data_win,chain_data,channels,steps,screen_buffer,render_style=['int','int'])
             draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
@@ -884,7 +929,7 @@ def main(stdscr):
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
             draw_row_no(row_win,steps,phrase_step)
-            draw_data(data_win,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
+            draw_data(data_win,phrase_data,channels,steps,screen_buffer,render_style=['tet','mod','int','int','int','int','int'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
@@ -899,7 +944,7 @@ def main(stdscr):
             update_input(stdscr,config_data,channels,steps,max_value=512,large_step=10)
             draw_row_no(row_win,steps,99)
 
-            draw_data(data_win,config_data,channels,steps,render_style=['int'])
+            draw_data(data_win,config_data,channels,steps,screen_buffer,render_style=['int'])
             draw_help(HELP_TEXT_CONFIG)
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
@@ -907,7 +952,6 @@ def main(stdscr):
             stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Loop Length")
             stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
 
-            stdscr.refresh()
 
         elif current_screen == 4:
             draw_visualizer(visualizer_win)
@@ -920,7 +964,7 @@ def main(stdscr):
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
         time_now = time.time()
-        stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
+        stdscr.addstr(0,0,f"{is_dirty} {(time_now-time_last)*10000}")
 
 
 
@@ -928,7 +972,14 @@ def main(stdscr):
             play_song(0)
 
 
-        stdscr.refresh()
+        if is_dirty:
+            pass
+
+
+
+
+
+
 
 # Make sure that the app is only executed as script
 if __name__ == "__main__":
