@@ -335,11 +335,12 @@ def paste_value(flood = False):
             data = phrase_data
             flood_length = MAX_PHRASE_STEPS
         
-        if not flood:
-            flood_length = 1
+        if flood:
 
-        for i in range(flood_length):
-            data[active_data][cursor[0]][i] = copy(copy_buffer)
+            for i in range(flood_length):
+                data[active_data][cursor[0]][i] = copy(copy_buffer)
+        else:
+            data[active_data][cursor[0]][cursor[1]] = copy(copy_buffer)
 
         shift_mod_a = False
         shift_mod_b = False
