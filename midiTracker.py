@@ -477,49 +477,42 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
         if data[active_data][cursor[0]][cursor[1]] > max_value-1:
             data[active_data][cursor[0]][cursor[1]] = 0
     
-def draw_data(win,data,max_column,max_row,buffer,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
-
-    win.resize(max_row+1,max_column*4)
+def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
 
     for row in range(max_row):
-        
-        active = " "
         for column in range(max_column):
-            if row == cursor[1] and column == cursor[0]:
-                active = "*"
-            else:
-                active = " "
-
             slot = data[active_data][column][row]
             note = 0
             render_slot = ""
             if slot == None:
-                render_slot = active + "-- "
+                render_slot = " -- "
             else:
                 if render_style[column] == 'tet':
                     note = NOTES_LOOKUP[int(slot)%12]
-                    render_slot = f"{active}{note}{int(abs((slot/12-1))):01}"
+                    octave = int(slot/12-1)
+                    if slot != 0:
+                        render_slot = f" {note}{octave}"
+                    else:
+                        render_slot = f" {note}-"
                 elif render_style[column] == 'hex':
-                    render_slot = f"{active}{slot:02x} "
+                    render_slot = f" {slot:02x} "
                 elif render_style[column] == 'int':
-                    render_slot = f"{active}{slot:03}"
+                    render_slot = f" {slot:02} "
                 elif render_style[column] == 'str':
-                    render_slot = f"{active}{slot} "
+                    render_slot = f" {slot} "
                 elif render_style[column] == 'mod':
                     modifier = MODIFIERS_LOOKUP[int(slot)%MODIFIERS_LEN]
-                    render_slot = f"{active}{modifier}" # warp around every modifier lookup character
-            buffer += render_slot
-            #if row == cursor[1] and column == cursor[0]:
-            #    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
-            #else:
-            #    if is_song and row >= loop_length:
-            #        data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_DIM)
-            #    else:
-            #       data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
+                    render_slot = f"{modifier}" # warp around every modifier lookup character
 
-    win.addstr(0,0,buffer, curses.A_BOLD)
+            if row == cursor[1] and column == cursor[0]:
+                data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_REVERSE | curses.A_BOLD)
+            else:
+                if is_song and row >= loop_length:
+                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_DIM)
+                else:
+                    data_win.addstr(row,column*SLOT_WIDTH,render_slot, curses.A_BOLD)
 
-    win.refresh()
+    data_win.refresh()
 
 
 def draw_help(help_text):
@@ -877,7 +870,7 @@ def main(stdscr):
             steps = MAX_SONG_STEPS
             update_input(stdscr,song_data,channels,steps)
             draw_row_no(row_win,steps,song_step,is_song = True)
-            draw_data(data_win,song_data,channels,steps,screen_buffer,is_song = True)
+            draw_data(data_win,song_data,channels,steps,is_song = True)
             draw_help(HELP_TEXT_SONG)
 
         elif current_screen == 1:
@@ -892,7 +885,7 @@ def main(stdscr):
             steps = MAX_CHAIN_STEPS
             update_input(stdscr,chain_data,channels,steps)
             draw_row_no(row_win,steps,chain_step)
-            draw_data(data_win,chain_data,channels,steps,screen_buffer,render_style=['int','int'])
+            draw_data(data_win,chain_data,channels,steps,render_style=['int','int'])
             draw_help(HELP_TEXT_CHAIN)
         elif current_screen == 2:
             # PHRASE VIEW
@@ -906,7 +899,7 @@ def main(stdscr):
             steps = MAX_PHRASE_STEPS
             update_input(stdscr,phrase_data,channels,steps)
             draw_row_no(row_win,steps,phrase_step)
-            draw_data(data_win,phrase_data,channels,steps,screen_buffer,render_style=['tet','mod','int','int','int','int','int'])
+            draw_data(data_win,phrase_data,channels,steps,render_style=['tet','mod','int','int','int','int','int'])
             draw_help(HELP_TEXT_PHRASE)
 
         elif current_screen == 3:
@@ -921,7 +914,7 @@ def main(stdscr):
             update_input(stdscr,config_data,channels,steps,max_value=512)
             draw_row_no(row_win,steps,99)
 
-            draw_data(data_win,config_data,channels,steps,screen_buffer,render_style=['int'])
+            draw_data(data_win,config_data,channels,steps,render_style=['int'])
             draw_help(HELP_TEXT_CONFIG)
 
             stdscr.addstr(TABLE_HEADER_Y+1,TABLE_HEADER_X+6,"Midi Device")
