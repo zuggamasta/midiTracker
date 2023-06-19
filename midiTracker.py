@@ -73,46 +73,6 @@ KEYMAP = {
     "paste":    "v",
     "flood":    "V"
     }
-# INPUT
-KEYMAP_NEW = {
-    "1" :  ["changeScreenTo","0"],
-    "2" :  ["changeScreenTo","1"],
-    "3" :  ["changeScreenTo","2"],
-    "4" :  ["changeScreenTo","3"],
-    "5" :  ["changeScreenTo","4"],
-    "w" :  ["panic","None"],
-    "q" :  ["quitApp","None"],
-    "S" :  ["save_state"," "],
-    "a" :  ["set_shiftmod","1"],
-    "s" :  ["set_shiftmod","2"],
-
-
-
-
-
-    
-    "KEY_UP" :  ["sampleFunc","sample arg","0"],
-    "down":     "KEY_DOWN",
-    "left":     "KEY_LEFT",
-    "right":    "KEY_RIGHT",
-    "moda":     "a",
-    "modb":     "s",
-    "delete":   "x",
-    "quit":     "Q",
-    "save":     "S",
-    "panic":    "w",
-    "restart":  " ",
-    "help":     "h",
-    "song":     "1",
-    "chain":    "2",
-    "phrase":   "3",
-    "config":   "4",
-    "visualizer":"5",
-    "help":     "h",
-    "copy":     "c",
-    "paste":    "v",
-    "flood":    "V"
-    }
 
 # LAYOUT
 CENTER_GAP = 10
@@ -187,6 +147,33 @@ config_data = []
 config=  [[0x01,120,8,0xab],["Midi Device","BPM","loop_length","not yet defined"] ]  
 config_data.append(config)
 
+# INPUT
+KEYMAP_NEW = {
+    "1" : lambda: changeScreenTo(0),
+    "2" : lambda: changeScreenTo(1),
+    "3" : lambda: changeScreenTo(2),
+    "4" : lambda: changeScreenTo(3),
+    "5" : lambda: changeScreenTo(4),
+    "w" : lambda: panic(),
+    "q" : lambda: quitApp(),
+    "S" : lambda: save_state( ),
+    "a" : lambda: set_shiftmod(1),
+    "s" : lambda: set_shiftmod(2),
+    " " : lambda: reset_playhead(),
+    "c" : lambda: copy_value(),
+    "v" : lambda: paste_value(flood = False),
+    "V" : lambda: paste_value(flood = True),
+    "h" : lambda: show_help(),
+    "KEY_UP" : lambda: modify_cursor("up"),
+    "KEY_DOWN" : lambda: modify_cursor("down"),
+    "KEY_LEFT" : lambda: modify_cursor("left"),
+    "KEY_RIGHT" : lambda: modify_cursor("right"),
+
+
+    }
+
+
+
 def draw_debug(scr,value):
     scr.addstr(19,0,value)
 
@@ -242,7 +229,7 @@ def load_state(autoload):
             # print("  not loading   ")
             pass
 
-def save_state(arg):
+def save_state():
 
     save_state_data = []
 
@@ -284,7 +271,7 @@ def panic():
             outport.send(Message('note_off', channel=channel, note=note, velocity=120))
 
 
-def quitApp(arg):
+def quitApp():
     save_state_data = []
 
     save_state_data.append(song_data)
@@ -296,6 +283,92 @@ def quitApp(arg):
         json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
     
     sys.exit()
+
+def reset_playhead():
+    global song_step, chain_step, phrase_step, sub_step, is_song_playing
+    
+    panic()
+
+    is_song_playing = not is_song_playing
+
+    global current_notes_buffer
+    global last_notes_buffer
+    current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+    last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+
+def copy_value(deep = False):
+    global copy_buffer
+    if current_screen >= 3:
+            return        
+    elif current_screen == 0:
+        data = song_data
+    elif current_screen == 1:
+        data = chain_data
+    elif current_screen == 2:
+        data = phrase_data
+    copy_buffer = copy(data[active_data][cursor[0]][cursor[1]] )
+
+
+def paste_value(flood = False):
+        global shift_mod_a, shift_mod_b
+        
+        flood_length = 0
+        
+        if current_screen >= 3:
+            return        
+        elif current_screen == 0:
+            data = song_data
+            flood_length = MAX_SONG_STEPS
+        elif current_screen == 1:
+            data = chain_data
+            flood_length = MAX_CHAIN_STEPS
+        elif current_screen == 2:
+            data = phrase_data
+            flood_length = MAX_PHRASE_STEPS
+        
+        if not flood:
+            flood_length = 1
+        
+
+
+        for i in range(flood_length):
+            data[active_data][cursor[0]][i] = copy(copy_buffer)
+
+        shift_mod_a = False
+        shift_mod_b = False
+
+def update_data():
+    if current_screen == 0:
+        active_data = current_song
+    elif current_screen == 1:
+        active_data = current_chain
+    elif current_screen == 2:
+        active_data = current_phrase
+    elif current_screen == 3:
+        current_config = 0
+        active_data == current_config
+        
+def show_help():
+    is_show_help = not is_show_help
+
+def modify_cursor(direction):
+
+
+
+    if shift_mod_b:
+        pass
+    else:
+
+
+        if direction == "up":
+            cursor[1] -= 1
+        elif direction == "down":
+            cursor[1] += 1
+        elif direction == "left":
+            cursor[0] -= 1
+        elif direction == "right":
+            cursor[0] += 1
+
 
 
 def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 12):
@@ -324,55 +397,24 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     try:
         key = scr.getkey()
-        globals()[str(KEYMAP_NEW[key][0])](KEYMAP_NEW[key][1])
+        func =  KEYMAP_NEW[key]
+
+        func()
     
     except SystemExit:
         sys.exit()
 
-    except:
+    except Exception as e:
+        if len(str(e)) > 8:
+            scr.addstr(HEIGHT-1,WIDTH-1-len(str(e)),f"{e}", TERTIARY | curses.A_REVERSE)
         key = None
         is_dirty = False
+ 
 
-
-    if key == KEYMAP["copy"]:
-        if current_screen == 3:
-            return
-        copy_buffer = copy(data[active_data][cursor[0]][cursor[1]] )
-
-    if key == KEYMAP["paste"]:
-        if current_screen == 3:
-            return
-        data[active_data][cursor[0]][cursor[1]] = copy(copy_buffer)
-    
-    if key == KEYMAP["flood"]:
-        flood_length = 0
-        if current_screen == 0:
-            flood_length = MAX_SONG_STEPS
-        elif current_screen == 1:
-            flood_length = MAX_CHAIN_STEPS
-        elif current_screen == 2:
-            flood_length = MAX_PHRASE_STEPS
-        elif current_screen == 3:
-            flood_length = 0
-        
-        for i in range(flood_length):
-            data[active_data][cursor[0]][i] = copy(copy_buffer)
-
-        shift_mod_a = False
-        shift_mod_b = False
-
-
-    if current_screen == 0:
-        active_data = current_song
-    elif current_screen == 1:
-        active_data = current_chain
-    elif current_screen == 2:
-        active_data = current_phrase
-    elif current_screen == 3:
-        active_data == current_config
+    update_data()
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
-    elif key == KEYMAP["down"] and shift_mod_b:
+    if key == KEYMAP["down"] and shift_mod_b:
         # CHAIN SCREEN
         if current_screen == 1:
             if current_chain+2 > len(chain_data) :
@@ -396,24 +438,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
             current_phrase -= 1
             if current_phrase < 0:
                 current_phrase = 0
- 
-    elif key == KEYMAP["help"]:
-        is_show_help = not is_show_help
-
-
-
-    elif key == KEYMAP["restart"]:
-        panic()
-        is_song_playing = not is_song_playing
-        song_step = 0
-        chain_step = 0
-        phrase_step = 0
-        sub_step = 0
-        global current_notes_buffer
-        global last_notes_buffer
-        current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
-        last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
-    
 
     # MODIFY DATA
     elif key == KEYMAP["up"] and shift_mod_a:
@@ -444,22 +468,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     # MOVE CURSOR
 
-    if not shift_mod_a and not shift_mod_b:
-        if key == KEYMAP["up"] :
-            cursor[1] -= 1
-        elif key == KEYMAP["down"]:
-            cursor[1] += 1
-        elif key == KEYMAP["right"]:
-            cursor[0] += 1
-        elif key == KEYMAP["left"]:
-            cursor[0] -= 1
 
-
-
-    # QUIT APPLICATION
-
-    if key == KEYMAP["quit"]:
-        pass
     
     # WRAP CURSOR AROUND
     if cursor[0] < 0:
@@ -471,9 +480,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     if cursor[1] >= max_row:
         cursor[1] = 0
 
-    if current_screen == 3:
-        active_data = 0
-        current_config = 0
+
 
     if data[active_data][cursor[0]][cursor[1]] != None:
         if data[active_data][cursor[0]][cursor[1]] < 0:
