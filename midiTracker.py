@@ -634,7 +634,7 @@ def draw_intro(scr):
     global visualizer_buffer
     HEIGHT,WIDTH = scr.getmaxyx()
 
-    visualizer_buffer = [[1 for _ in range(MAX_CHANNELS)],[1+ int(channel * WIDTH/(MAX_CHANNELS-4)) for channel in range(MAX_CHANNELS)] ]
+    visualizer_buffer = [[1 for _ in range(MAX_CHANNELS)],[1+ int(channel * WIDTH/(MAX_CHANNELS-2)) for channel in range(MAX_CHANNELS)] ]
 
     pad = curses.newpad(16,68)
     ANIMATION_START = 16
@@ -738,8 +738,6 @@ def draw_visualizer(win,render_style="tet"):
     for channel in range (MAX_CHANNELS):
         note_val = current_notes_buffer[channel]
         if note_val == None: 
-            win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"-- ")
-
             pass
         else:
 
@@ -751,7 +749,7 @@ def draw_visualizer(win,render_style="tet"):
 
         if(sub_step == SUB_STEPS-1 ):
 
-                if 1 == 1 :
+                if 1 == 2 :
                     visualizer_buffer[0][channel] += random.randint(0,2)
                     visualizer_buffer[1][channel] += random.randint(-2,2)
 
@@ -909,9 +907,8 @@ def main(stdscr):
         # draw Playback info of song, chain and phrase step
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
-        # for profiling
         time_now = time.time()
-        #stdscr.addstr(0,0,f"{is_dirty} {(time_now-time_last)*10000}")
+        stdscr.addstr(0,0,f"{is_dirty} {(time_now-time_last)*10000}")
 
         if is_song_playing:
             play_song(0)
