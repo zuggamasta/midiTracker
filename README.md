@@ -1,5 +1,5 @@
 ```
-                                        oo          dP    oo 
+v0.2                                    oo          dP    oo 
                                                     88       
                           88d8b.d8b.    dP    .d888b88    dP 
                           88'`88'`88    88    88'  `88    88 
@@ -23,9 +23,11 @@ aMidiTracker is a small tracker that sequences notes in a nested vertical layout
 I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
 ### python modules used:
-- MIDO for easy midi objects - https://github.com/mido/mido
-- rtmidi for python - https://github.com/superquadratic/rtmidi-python
-- curses for Terminal UI - https://docs.python.org/3/howto/curses.html
+- MIDO for easy midi objects - [github.com/mido/mido](https://github.com/mido/mido)
+- rtmidi for python - [github.com/superquadratic/rtmidi-python](https://github.com/superquadratic/rtmidi-python)
+- curses for Terminal UI - [docs.python.org/3/howto/curses](https://docs.python.org/3/howto/curses.html)
+- cx_freeze for builds - [pypi.org/project/cx-Freeze](https://pypi.org/project/cx-Freeze/)
+
 
 ![Song editor](/Documentation/screen_1.png)
 
@@ -42,6 +44,9 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 ```3``` : Phrase Screen
 
 ```4``` : Config Screen
+
+```5``` : Visualizer Screen (Press any key to leave)
+
 
 
 ### Move the cursor:
@@ -80,7 +85,7 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 ```w``` : Panic (stops all Midi Messages)
 
-```Space``` : Panic / Restart Song
+```Space``` : Stop / Restart Song
 
 ```Shift + s``` : Save
 
