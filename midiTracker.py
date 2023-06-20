@@ -49,37 +49,10 @@ HELP_TEXT_PHRASE="Use phrases to arrange notes on a sixteenth grid. "
 HELP_TEXT_CONFIG="Use the configuration page to set Midi device, tempo and other settings. "
 HEADER_STRING = "Chn1Chn2Chn3Chn4RmplChn6Chn7Chn8Chn9Ch10Ch11Ch12Ch13Ch14Ch15Ch16"[0:MAX_CHANNELS*SLOT_WIDTH]
 
-# INPUT
-KEYMAP = {
-    "up" :      "KEY_UP",
-    "down":     "KEY_DOWN",
-    "left":     "KEY_LEFT",
-    "right":    "KEY_RIGHT",
-    "moda":     "a",
-    "modb":     "s",
-    "delete":   "x",
-    "quit":     "Q",
-    "save":     "S",
-    "panic":    "w",
-    "restart":  " ",
-    "help":     "h",
-    "song":     "1",
-    "chain":    "2",
-    "phrase":   "3",
-    "config":   "4",
-    "visualizer":"5",
-    "help":     "h",
-    "copy":     "c",
-    "paste":    "v",
-    "flood":    "V"
-    }
-
 # LAYOUT
 CENTER_GAP = 10
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 4
 STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
-
-
 
 # PROFILING
 time_last = 0
@@ -751,7 +724,7 @@ def update_visualizer(scr):
     except:
         key = None
 
-    if key == KEYMAP["song"]:
+    if key:
         current_screen = 0
         scr.erase()
 
@@ -770,7 +743,7 @@ def draw_visualizer(win,render_style="tet"):
 
             if render_style == 'tet':
                 note = NOTES_LOOKUP[int(note_val)%12]
-                octave = round(int(note_val/12)%12)+1
+                octave = int(note_val/12-1)
                 note_render = f" {note}{octave}"
                 win.addstr(int(visualizer_buffer[0][channel]),int(visualizer_buffer[1][channel]),f"{note_render} ")
 
