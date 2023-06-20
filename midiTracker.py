@@ -145,11 +145,6 @@ KEYMAP_NEW = {
 
     }
 
-
-
-def draw_debug(scr,value):
-    scr.addstr(19,0,value)
-
 def load_state(autoload):
     
     global song_data
@@ -634,7 +629,7 @@ def draw_intro(scr):
     global visualizer_buffer
     HEIGHT,WIDTH = scr.getmaxyx()
 
-    visualizer_buffer = [[1 for _ in range(MAX_CHANNELS)],[1+ int(channel * WIDTH/(MAX_CHANNELS-2)) for channel in range(MAX_CHANNELS)] ]
+    visualizer_buffer = [[1 for _ in range(MAX_CHANNELS)],[ 2+ int(channel * int((WIDTH/MAX_CHANNELS))) for channel in range(MAX_CHANNELS)] ]
 
     pad = curses.newpad(16,68)
     ANIMATION_START = 16
@@ -643,7 +638,7 @@ def draw_intro(scr):
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
         # draw version no on top left
-        scr.addstr(0,0,f"v0.1")
+        scr.addstr(0,0,f"v0.2")
         # draw terminal size on bottom right
         scr.addstr(HEIGHT-1,WIDTH-2-len(str(WIDTH)+str(HEIGHT)),f"{HEIGHT}×{WIDTH}")
         scr.refresh()
@@ -755,7 +750,7 @@ def draw_visualizer(win,render_style="tet"):
 
                 else:
                     visualizer_buffer[0][channel] += 1
-                    visualizer_buffer[1][channel] = 1+ int(channel * WIDTH/(MAX_CHANNELS-2))
+                    visualizer_buffer[1][channel] = 2+ int(channel * int((WIDTH/MAX_CHANNELS)))
                 
                 if( visualizer_buffer[0][channel] > HEIGHT-2 ):visualizer_buffer[0][channel] = 1
                 if( visualizer_buffer[0][channel] < 1 ): visualizer_buffer[0][channel] = HEIGHT-2
@@ -908,7 +903,7 @@ def main(stdscr):
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
         time_now = time.time()
-        stdscr.addstr(0,0,f"{is_dirty} {(time_now-time_last)*10000}")
+        #stdscr.addstr(0,0,f"{is_dirty} {(time_now-time_last)*10000}")
 
         if is_song_playing:
             play_song(0)
