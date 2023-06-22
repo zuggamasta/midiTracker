@@ -238,8 +238,12 @@ def set_shiftmod(value):
     
 
 def changeScreenTo(screen):
-    global current_screen
-    current_screen = int(screen)
+    global current_screen,active_data
+    active_data = 0
+
+    current_screen = screen
+    update_data()
+
 
 def panic():
     for channel in range(MAX_CHANNELS):
@@ -314,10 +318,11 @@ def paste_value(flood = False):
         shift_mod_b = False
 
 #TODO: Remove this function?
-def update_data(): 
-    return 
+def update_data():
+    global active_data 
     if current_screen == 0:
-        active_data = current_song
+        #active_data = current_song
+        active_data = 0
     elif current_screen == 1:
         active_data = current_chain
     elif current_screen == 2:
@@ -331,6 +336,8 @@ def show_help():
     is_show_help = not is_show_help
 
 def modify_cursor(direction):
+    global current_phrase,current_chain
+
     large_step = 10
 
     if current_screen == 0:
@@ -439,12 +446,12 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI):
         cursor[0] = 0
     if cursor[1] >= max_row:
         cursor[1] = 0
-
-    if data[active_data][cursor[0]][cursor[1]] != None:
-        if data[active_data][cursor[0]][cursor[1]] < 0:
-            data[active_data][cursor[0]][cursor[1]] = max_value-1
-        if data[active_data][cursor[0]][cursor[1]] > max_value-1:
-            data[active_data][cursor[0]][cursor[1]] = 0
+#
+#    if data[active_data][cursor[0]][cursor[1]] != None:
+#        if data[active_data][cursor[0]][cursor[1]] < 0:
+#            data[active_data][cursor[0]][cursor[1]] = max_value-1
+#        if data[active_data][cursor[0]][cursor[1]] > max_value-1:
+#           data[active_data][cursor[0]][cursor[1]] = 0
     
 def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
 
@@ -908,6 +915,7 @@ def main(stdscr):
         if is_song_playing:
             play_song(0)
 
+        stdscr.addstr(f"{active_data}")
 
         if is_dirty:
             pass
