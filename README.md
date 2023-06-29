@@ -93,20 +93,6 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 ```Shift + q``` : Quit
 
 
-## Saving / Loading
-
-Miditracker automatically saves your file when you quit a session with ```shift ü q``` button. This save is available in ```savestate.json``` and will always be overwritten you quit a session.
-
-You can save the current state of your file with the ```shift + s``` combination. Files will have this format ```230509-21-55.json```and will be saved next to your midipython.py file. If you want to load a state use:
-
-```miditracker.py -load yoursavefile.json```
-
-## PANIC / STOP ALL NOTES / RESTART
-Use the ```space``` key to stop all playing midi channels and notes. This also restarts playback.
-
-## Quitting
-process can be closed with ```shift + q``` .
-
 ## More Screenshots
 
 ![A screenshot of miditracker in action, showing the phrase editor](/Documentation/screen_2.png)
