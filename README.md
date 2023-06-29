@@ -30,22 +30,23 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 
 ### Installation for beginners:
 I learned how to use git and the CLI from well documented projects. Prerequisite is that you have python 3.9.10 or above, ```pip``` and ```git``` intalled. Installing the terminal git command can be achieved by installing the desktop variant.
-#### Get the files
+#### Installation for beginners: Get the files
 - First change directories to the parent folder where you want to store this repository, for example: ```cd /Users/YOURUSERNAME/Desktop/```. In the next step we will automatically create the folder with the name of this repository.
 - We will now clone the respository to our machine ```git clone https://github.com/zuggamasta/midiTracker.git```, via the terminal. You could also download it from the github page as *.zip, but we'll do the rest in the terminal anyway.
 - To verify that everything went well, you can look at your desktop and find the folder ```midiTracker```. With the terminal still open change directory to it with ```cd midiTracker``` and check if everyting went well. The terminal will echo that you don't have changes to commit.
-#### setup dependencies / venv
+#### Installation for beginners: Setup dependencies / venv
 - Change Directory to the midiTracker folder. If you haven't closed the Terminal since the last step there is nothing to do.
 - We will now setup a virtual environment by venv, this keeps your machine clean from these modules and sets up a little environment for midiTracker. ```python3 -m venv env/``` with ```env/``` being a folder realtive to the repository. You can also specify an absolute path with /Users/YOURUSERNAME/ but I keep my env in my project.
 - After the venv is set up we'll need to tell the computer to use it. We do that by activating it read the manual if you're on another system that is not macOS [here](https://docs.python.org/3/library/venv.html#how-venvs-work). For MacOS bash/zsh well go with ```source env/bin/activate```.
 - After the virtual environment is activated you'll see a small (env) next to your username in the ternimal. You'll need to repeat the activation every time you work in or use midiTracker. Now we can swiftly add all our modules to the environment 
 - ```python3 -m pip install mido```
 - ```python3 -m pip install python-rtmidi```
-- 
-
-
-
-
+- ```python3 -m pip install rtmidi```
+- ```python3 -m pip install cx_freeze``` if you want to build a one click application.
+#### Installation for beginners: Get going
+- Now you should be able to start miditracker.py by doing so from the console with ```python3 midiTracker.py```
+- Check out the first lines of miditracker.py to tailor the app to your liking. I've marked values that can be easily changed with ```# USER EDITABLE CONSTANTS```
+- Make sure to switch to page 4 and select your desired midi device. This selection will be saved in save files and when quitting the application with  ```shift + q```
 
 ![Song editor](/Documentation/screen_1.png)
 
