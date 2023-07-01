@@ -1,3 +1,4 @@
+#v0.3
 import time
 
 import curses

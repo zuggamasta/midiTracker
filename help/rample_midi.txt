@@ -27,4 +27,4 @@ CC100 previous kit   any
 CC101 next kit       any
 
 
-Where x is the sample number, from 1 to 4. For example CC10 controls the pitch of SP1 and CC38 controlls the level of SP3. you can also use x = 5 to set all sample values (e.g. the filter of all voices) at the same time
+Where x is the sample number, from 1 to 4. For example CC10 controls the pitch of SP1 and CC38 controlls the level of SP3. you can also use x = 5 to set all sample values (e.g. the filter of all voices) at the same time.
