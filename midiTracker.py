@@ -932,7 +932,8 @@ def main(stdscr):
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
         time_now = time.time()
-        stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
+        # DEBUG FRAME TIME
+        # stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
 
 
 
