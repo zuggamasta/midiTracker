@@ -38,7 +38,7 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 ### Change Screens
 
-```Number Keys 1 - 5``` brings you to the different screens. In the order Song, Chain, Phrase, Confing, Visualizer.
+```Number Keys 1 - 5``` :  Brings you to the different screens. In the order Song, Chain, Phrase, Confing, Visualizer.
 
 ### Move the cursor:
 
