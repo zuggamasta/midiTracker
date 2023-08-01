@@ -30,8 +30,28 @@ I'm building this whole thing with python 3.9.10. And I have close to no experie
 
 For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
 
-![Song editor](/Documentation/screen_1.png)
+```
 
+    SONG 00                                   ┌───────────────┐
+    Chn1Chn2Chn3Chn4RmplChn6Chn7Chn8          │       BPM: 120│
+  00 --  --  --  --  --  --  --  --           │IAC-Treiber … 1│
+  01 --  --  --  --  --  --  --  --           │               │
+  02 --  --  --  --  --  --  --  --           │               │
+  03 --  --  --  --  --  --  --  --           │Song Step:   00│
+  04 --  --  --  --  --  --  --  --           │Chain Step:  01│
+  05 --  --  --  --  --  --  --  --           │Phrase Step: 10│
+  06 --  --  --  --  --  --  --  --           │               │
+  07 --  --  --  --  --  --  --  --           │Loop Length: 08│
+  08 --  --  --  --  --  --  --  --           │               │
+  09 --  --  --  --  --  --  --  --           │               │
+  10 --  --  --  --  --  --  --  --           │  Mod1         │
+  11 --  --  --  --  --  --  --  --           │  Mod2         │
+  12 --  --  --  --  --  --  --  --           │               │
+  13 --  --  --  --  --  --  --  --           │               │
+  14 --  --  --  --  --  --  --  --           │               │
+  15 --  --  --  --  --  --  --  --           └───────────────┘
+
+```
 ## Keyboard Controls:
 
 This is the keymap which midiTracker has preconfigured, you can change the assingment of keys in the top of the main miditracker.py file.
