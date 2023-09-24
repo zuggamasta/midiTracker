@@ -4,14 +4,13 @@ import time
 import curses
 from curses import wrapper
 
-i = 0
+cc_scroll = 0
 
 def main(stdscr):
 
-	global i
+	global cc_scroll
 
-	height,width = stdscr.getmaxyx()
-
+	HEIGHT,WIDTH = stdscr.getmaxyx()
 
 	with open('help/rample_midi.txt') as f:
 		info_rample = f.read()
@@ -21,10 +20,10 @@ def main(stdscr):
 	pad.addstr(info_rample)
 	
 	stdscr.refresh()
-	while i < 100:
-		pad.refresh(i,0,0,0,height-1,width-1)
-		i += 1;
-		time.sleep(0.33)
+	while cc_scroll < 100:
+		pad.refresh(cc_scroll,0,0,0,HEIGHT-1,WIDTH-1)
+		cc_scroll += 1;
+		time.sleep(0.03)
 
 
 	stdscr.getch()

@@ -80,12 +80,9 @@ CENTER_GAP = 10
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 4
 STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
 
-
-
-# PROFILING
+# PROFILING / TIMING HELPERS
 time_last = 0
 time_now = 0
-
 
 ################################
 #          VARIABLES           #
@@ -640,7 +637,6 @@ def draw_intro(scr):
 
     visualizer_buffer = [[1 for _ in range(MAX_CHANNELS)],[ 2+ int(channel * int((WIDTH/MAX_CHANNELS))) for channel in range(MAX_CHANNELS)] ]
 
-
     pad = curses.newpad(16,68)
     ANIMATION_START = 16
 
@@ -659,6 +655,7 @@ def draw_intro(scr):
 def draw_info(win,midiport):
         
         win.border()
+        # i will be the vertical and j the horizontal position
         i,j = 1,1
 
 
@@ -671,16 +668,15 @@ def draw_info(win,midiport):
         else:
             win.addstr(i,j, "  ", )
 
-         # draw global infos, these are always on screen.
+        # draw global infos, these are always on screen.
         win.addstr(i,j+3,f"    BPM: {bpm:03}")
-        i+=1
+
+        i+=1 # i counts up for each line
         win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
         i+=3
         
-
         win.attron(shift_mod_color | curses.A_STANDOUT)
 
-       
         win.addstr(i,j,f"Song Step:   {song_step:02}")
         i+=1
         win.addstr(i,j,f"Chain Step:  {chain_step:02}")
@@ -694,7 +690,6 @@ def draw_info(win,midiport):
 
         win.attroff(shift_mod_color | curses.A_STANDOUT)
 
-
         if shift_mod_a:
             win.addstr(i,j,f" ▶ Mod1 ", PRIMARY | curses.A_REVERSE)
         else:
@@ -705,13 +700,39 @@ def draw_info(win,midiport):
             win.addstr(i,j,f" ▶ Mod2 ", SECONDARY | curses.A_REVERSE)
         else:
             win.addstr(i,j,f"  Mod2  ")
+
+        
+        i+=2
         
         
-        
-        
-        
-        
+        # noteinfo = None
+        # if current_notes_buffer[0] == None:
+        #     noteinfo = "   "
+        # else:
+        #     note = NOTES_LOOKUP[int(current_notes_buffer[0])%12]
+        #     octave = int(current_notes_buffer[0]/12-1)
+        #     if current_notes_buffer[0] != 0:
+        #         noteinfo = f"{note}{octave}"
+        #     else:
+        #         noteinfo = f"C-1"
+    
+        win.addstr(i,j,f"{str(current_notes_buffer[0] or '---').zfill(3)}")
+        win.addstr(i,j+4,f"{str(current_notes_buffer[1] or '---').zfill(3)}")
+        win.addstr(i,j+8,f"{str(current_notes_buffer[2] or '---').zfill(3)}")
+        win.addstr(i,j+12,f"{str(current_notes_buffer[3] or '---').zfill(3)}")
+        win.addstr(i+1,j,f"{str(current_notes_buffer[4] or '---').zfill(3)}")
+        win.addstr(i+1,j+4,f"{str(current_notes_buffer[5] or '---').zfill(3)}")
+        win.addstr(i+1,j+8,f"{str(current_notes_buffer[6] or '---').zfill(3)}")
+        win.addstr(i+1,j+12,f"{str(current_notes_buffer[7] or '---').zfill(3)}")
+
+
+
+
+
+
         win.refresh()
+
+
  
 def setup_colors():
 
@@ -747,7 +768,6 @@ def draw_visualizer(win,render_style="tet"):
     if chain_step %4==2: color = PRIMARY
     if chain_step %4==3: color = TERTIARY
 
-
     win.attron(color | curses.A_BOLD)
 
     for channel in range (MAX_CHANNELS):
@@ -780,16 +800,11 @@ def draw_visualizer(win,render_style="tet"):
 
             win.refresh()
 
-        
-    
     win.attroff(color | curses.A_BOLD)
 
     is_dirty = False
-    
 
- 
-        
-
+# Main Program 
 
 def main(stdscr):
 
@@ -821,8 +836,6 @@ def main(stdscr):
     
     # This keeps the app running 
     while True:
-        
-        
 
         # is_dirty get set everytime an input changes the screen
         if is_dirty:           
@@ -936,11 +949,8 @@ def main(stdscr):
         # DEBUG FRAME TIME
         # stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
 
-
-
         if is_song_playing:
             play_song(0)
-
 
         stdscr.refresh()
 
