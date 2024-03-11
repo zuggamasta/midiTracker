@@ -174,6 +174,8 @@ def load_state(autoload):
             with open(f"savestate.json", "w") as fp:
                 json.dump(save_state_data, fp )  # Use indent=4 for a pretty-formatted JSON file
 
+
+    # try to load specified file by running `midiTracker.py -load myLatestJam.json`
     try:
         arguments = sys.argv
         if arguments[1] == "-load":
@@ -208,7 +210,6 @@ def save_state():
 
     now = datetime.now()
     formatted_date = f"{now:%y%m%d-%H-%M}"
-    print(formatted_date)
 
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp)  # Use indent=4 for a pretty-formatted JSON file
@@ -233,6 +234,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     global shift_mod_color
     global is_song_playing
     global is_show_help
+
     global copy_buffer
 
     is_dirty = True
@@ -314,7 +316,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         current_screen = 4
         shift_mod_a, shift_mod_b = False, False
 
-
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
     elif key == KEYMAP["down"] and shift_mod_b:
         # CHAIN SCREEN
@@ -390,7 +391,6 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
             data[active_data][cursor[0]][cursor[1]] = None
 
     # MOVE CURSOR
-
     if not shift_mod_a and not shift_mod_b:
         if key == KEYMAP["up"] :
             cursor[1] -= 1
@@ -401,10 +401,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         elif key == KEYMAP["left"]:
             cursor[0] -= 1
 
-
-
     # QUIT APPLICATION
-
     if key == KEYMAP["quit"]:
             panic()
 
@@ -750,6 +747,11 @@ def setup_colors():
 
 def update_visualizer(scr):
     global current_screen
+    global PRIMARY
+    global SECONDARY
+    global TERTIARY
+
+
     try:
         key = scr.getkey()
     except:
@@ -757,7 +759,21 @@ def update_visualizer(scr):
 
     if key == KEYMAP["song"]:
         current_screen = 0
+        setup_colors()
         scr.erase()
+
+    if key == KEYMAP["up"]:
+        tmp = PRIMARY
+        PRIMARY = SECONDARY
+        SECONDARY = TERTIARY
+        TERTIARY = tmp
+
+    if key == KEYMAP["down"]:
+        tmp = TERTIARY
+        TERTIARY = SECONDARY
+        SECONDARY = PRIMARY
+        PRIMARY = tmp
+        
 
 def draw_visualizer(win,render_style="tet"):
     global visualizer_buffer
