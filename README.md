@@ -20,7 +20,7 @@ aMidiTracker is a small tracker that sequences notes in a nested vertical layout
 
 ## Running midiTracker
 
-I'm building this whole thing with python 3.9.10. And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
+I'm building this whole thing with python **3.9.10.** And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
 ### python modules used:
 - MIDO for easy midi objects - [github.com/mido/mido](https://github.com/mido/mido)
