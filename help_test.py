@@ -5,6 +5,24 @@ import curses
 from curses import wrapper
 
 cc_scroll = 0
+running = True
+
+def update_input(scr):
+	global cc_scroll
+
+	try:
+			key = scr.getkey()
+	except:
+			key = None
+			is_dirty = False
+	
+	if key == "KEY_UP":
+		cc_scroll -= 1
+	if key == "KEY_DOWN":
+		cc_scroll += 1
+	
+	if cc_scroll < 0: cc_scroll = 0
+
 
 def main(stdscr):
 
@@ -18,14 +36,14 @@ def main(stdscr):
 
 	pad = curses.newpad(50,120)
 	pad.addstr(info_rample)
-	
 	stdscr.refresh()
-	while cc_scroll < 100:
+
+	while running:
 		pad.refresh(cc_scroll,0,0,0,HEIGHT-1,WIDTH-1)
-		cc_scroll += 1;
 		time.sleep(0.03)
 
+		update_input(stdscr)
 
-	stdscr.getch()
+
 
 wrapper(main)
