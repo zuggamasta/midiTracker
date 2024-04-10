@@ -5,10 +5,11 @@ import curses
 from curses import wrapper
 
 cc_scroll = 0
-running = True
+is_running = True
 
 def update_input(scr):
 	global cc_scroll
+	global is_running
 
 	try:
 			key = scr.getkey()
@@ -20,6 +21,8 @@ def update_input(scr):
 		cc_scroll -= 1
 	if key == "KEY_DOWN":
 		cc_scroll += 1
+	if key == "q":
+		is_running = False
 	
 	if cc_scroll < 0: cc_scroll = 0
 
@@ -38,7 +41,7 @@ def main(stdscr):
 	pad.addstr(info_rample)
 	stdscr.refresh()
 
-	while running:
+	while is_running:
 		pad.refresh(cc_scroll,0,0,0,HEIGHT-1,WIDTH-1)
 		time.sleep(0.03)
 
