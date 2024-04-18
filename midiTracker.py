@@ -72,6 +72,7 @@ KEYMAP = {
     "help":     "h",
     "copy":     "c",
     "paste":    "v",
+    "deepcopy": "C",
     "flood":    "V"
     }
 
@@ -108,6 +109,7 @@ shift_mod_color = 0
 
 # BUFFERS
 copy_buffer = 0
+deep_copy_buffer = [None for _ in range(MAX_PHRASE_STEPS)]
 midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
 current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
 current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
@@ -236,6 +238,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     global is_show_help
 
     global copy_buffer
+    global deep_copy_buffer
 
     is_dirty = True
 
@@ -267,6 +270,11 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         if current_screen == 3:
             return
         copy_buffer = copy(data[active_data][cursor[0]][cursor[1]] )
+    
+    if key == KEYMAP["deepcopy"]:
+        if current_screen != 2:
+            return
+        deep_copy_buffer = copy(data[active_data])
 
     if key == KEYMAP["paste"]:
         if current_screen == 3:
@@ -274,21 +282,27 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         data[active_data][cursor[0]][cursor[1]] = copy(copy_buffer)
     
     if key == KEYMAP["flood"]:
-        flood_length = 0
-        if current_screen == 0:
-            flood_length = MAX_SONG_STEPS
-        elif current_screen == 1:
-            flood_length = MAX_CHAIN_STEPS
-        elif current_screen == 2:
-            flood_length = MAX_PHRASE_STEPS
-        elif current_screen == 3:
-            flood_length = 0
+
         
-        for i in range(flood_length):
-            data[active_data][cursor[0]][i] = copy(copy_buffer)
+        if deep_copy_buffer:
+            data[active_data] = deep_copy_buffer
+            deep_copy_buffer = False
+        else:
+            flood_length = 0
+            if current_screen == 0:
+                flood_length = MAX_SONG_STEPS
+            elif current_screen == 1:
+                flood_length = MAX_CHAIN_STEPS
+            elif current_screen == 2:
+                flood_length = MAX_PHRASE_STEPS
+            elif current_screen == 3:
+                flood_length = 0
+            for i in range(flood_length):
+                data[active_data][cursor[0]][i] = copy(copy_buffer)
 
         shift_mod_a = False
         shift_mod_b = False
+
 
 
     if current_screen == 0:
