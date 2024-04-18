@@ -78,9 +78,11 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 &emsp; ```c``` : copy value
 
+&emsp; ```shift + c``` : deep copy, copies the current phrase content 
+
 &emsp; ```v``` : paste value
 
-&emsp; ```shift + v``` : flood value, writes copy buffer to all steps
+&emsp; ```shift + v``` : flood value, writes copy buffer to all steps or deep copy buffer if one is available
 
 ### Change Chains and Phrases:
 
