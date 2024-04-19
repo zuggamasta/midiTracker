@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 # PYTHON UTILITY MODULES
 import sys
 import time
