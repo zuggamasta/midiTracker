@@ -15,7 +15,6 @@ def update_input(scr):
 			key = scr.getkey()
 	except:
 			key = None
-			is_dirty = False
 	
 	if key == "KEY_UP":
 		cc_scroll -= 1
@@ -33,7 +32,7 @@ def main(stdscr):
 
 	HEIGHT,WIDTH = stdscr.getmaxyx()
 
-	with open('help/rample_midi.txt') as f:
+	with open('rample_midi.txt') as f:
 		info_rample = f.read()
 		f.close()
 
