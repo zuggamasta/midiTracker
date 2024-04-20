@@ -110,6 +110,8 @@ shift_mod_color = 0
 # BUFFERS
 copy_buffer = 0
 deep_copy_buffer = [None for _ in range(MAX_PHRASE_STEPS)]
+has_deep_copy = False
+
 midi_messages_buffer = [None for _ in range(MAX_CHANNELS)]
 current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
 current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
@@ -239,6 +241,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
     global copy_buffer
     global deep_copy_buffer
+    global has_deep_copy
 
     is_dirty = True
 
@@ -275,6 +278,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         if current_screen != 2:
             return
         deep_copy_buffer = copy(data[active_data])
+        has_deep_copy = True
 
     if key == KEYMAP["paste"]:
         if current_screen == 3:
@@ -284,9 +288,9 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     if key == KEYMAP["flood"]:
 
         
-        if deep_copy_buffer:
+        if has_deep_copy:
             data[active_data] = deep_copy_buffer
-            deep_copy_buffer = False
+            has_deep_copy = False
         else:
             flood_length = 0
             if current_screen == 0:
