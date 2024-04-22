@@ -1,4 +1,4 @@
-#v0.4
+#v0.5
 # PYTHON UTILITY MODULES
 import sys
 import time
@@ -278,7 +278,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     if key == KEYMAP["deepcopy"]:
         if current_screen != 2:
             return
-        deep_copy_buffer = copy(data[active_data])
+        deep_copy_buffer = deepcopy(data[active_data])
         has_deep_copy = True
 
     if key == KEYMAP["paste"]:
@@ -660,7 +660,7 @@ def draw_intro(scr):
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
         # draw version no on top left
-        scr.addstr(0,0,f"v0.4")
+        scr.addstr(0,0,f"v0.5")
         # draw terminal size on bottom right
         scr.addstr(HEIGHT-1,WIDTH-2-len(str(WIDTH)+str(HEIGHT)),f"{HEIGHT}×{WIDTH}")
         scr.refresh()
