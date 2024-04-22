@@ -5,6 +5,7 @@ import time
 import json
 from datetime import datetime
 from copy import copy
+from copy import deepcopy
 import random
 
 # MIDI OBJECT MODULE (Requires python-rtmidi)
@@ -289,7 +290,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
 
         
         if has_deep_copy:
-            data[active_data] = copy(deep_copy_buffer)
+            data[active_data] = deepcopy(deep_copy_buffer)
             has_deep_copy = False
         else:
             flood_length = 0
