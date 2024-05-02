@@ -15,7 +15,7 @@ d8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.
 ```                                 
 
 
-aMidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCII user interface.
+MidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCII user interface.
 
 
 ## Running midiTracker
@@ -26,6 +26,16 @@ I'm building this whole thing with python **3.9.10.** And I have close to no exp
 - MIDO for easy midi objects - [github.com/mido/mido](https://github.com/mido/mido)
 - rtmidi for python - [github.com/superquadratic/rtmidi-python](https://github.com/superquadratic/rtmidi-python)
 - curses (built-in) for Terminal UI - [docs.python.org/3/howto/curses](https://docs.python.org/3/howto/curses.html)
+
+### quick install guide:
+1. `git clone https://github.com/zuggamasta/midiTracker.git`
+2. `cd midiTracker/`
+3. `python3 -m venv venv/` <-- or use your python3.10 
+4. `source venv/bin/activate` 
+5. `python -V` --> verifying that we're in the venv and using the correct version Python 3.10.13 in my case
+6. `python -m pip install mido`
+7. `python -m pip install python-rtmidi`
+8. `python midiTracker.py`
 
 For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
 
