@@ -25,8 +25,7 @@ I'm building this whole thing with python **3.9.10.** And I have close to no exp
 ### python modules used:
 - MIDO for easy midi objects - [github.com/mido/mido](https://github.com/mido/mido)
 - rtmidi for python - [github.com/superquadratic/rtmidi-python](https://github.com/superquadratic/rtmidi-python)
-- curses for Terminal UI - [docs.python.org/3/howto/curses](https://docs.python.org/3/howto/curses.html)
-- cx_freeze for builds - [pypi.org/project/cx-Freeze](https://pypi.org/project/cx-Freeze/)
+- curses (built-in) for Terminal UI - [docs.python.org/3/howto/curses](https://docs.python.org/3/howto/curses.html)
 
 For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
 
