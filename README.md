@@ -22,11 +22,6 @@ MidiTracker is a small tracker that sequences notes in a nested vertical layout.
 
 I'm building this whole thing with python **3.9.10.** And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
-### python modules used:
-- MIDO for easy midi objects - [github.com/mido/mido](https://github.com/mido/mido)
-- rtmidi for python - [github.com/superquadratic/rtmidi-python](https://github.com/superquadratic/rtmidi-python)
-- curses (built-in) for Terminal UI - [docs.python.org/3/howto/curses](https://docs.python.org/3/howto/curses.html)
-
 ### quick install guide:
 1. `git clone https://github.com/zuggamasta/midiTracker.git`
 2. `cd midiTracker/`
