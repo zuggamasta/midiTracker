@@ -13,7 +13,7 @@ d8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.
   88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88       
   dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP       
 ```                                 
-
+![GitHub Release](https://img.shields.io/github/v/release/zuggamasta/midiTracker?include_prereleases&style=flat-square&logo=python&logoColor=white) ![GitHub last commit](https://img.shields.io/github/last-commit/zuggamasta/midiTracker?style=flat-square) ![GitHub Repo stars](https://img.shields.io/github/stars/zuggamasta/midiTracker?style=flat-square)
 
 MidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCII user interface.
 
@@ -22,17 +22,39 @@ MidiTracker is a small tracker that sequences notes in a nested vertical layout.
 
 I'm building this whole thing with python **3.9.10.** And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
-### quick install guide:
-1. `git clone https://github.com/zuggamasta/midiTracker.git`
-2. `cd midiTracker/`
-3. `python3 -m venv venv/` <-- or use your python3.10 
-4. `source venv/bin/activate` 
-5. `python -V` --> verifying that we're in the venv and using the correct version Python 3.10.13 in my case
-6. `python -m pip install mido`
-7. `python -m pip install python-rtmidi`
-8. `python midiTracker.py`
+### Quick Install Guide:
+```
+git clone https://github.com/zuggamasta/midiTracker.git
+```
+```
+cd midiTracker/
+```
+```
+python3 -m venv venv/
+```
+```
+source venv/bin/activate
+```
+```
+python -m pip install mido[ports-rtmidi]
+```
+```
+python midiTracker.py
+```
 
 For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
+
+
+### Starting midiTracker after Installation
+First navigate to the midiTracker folder
+```
+source venv/bin/activate
+```
+```
+python midiTracker.py
+```
+
+
 
 ```
 
