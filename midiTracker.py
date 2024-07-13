@@ -41,7 +41,7 @@ MAX_SONG_STEPS = 16      # DEFAULT = 8
 MAX_CHAIN_STEPS = 4     # DEFAULT = 4
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
-SUB_STEPS = 8           # DEFAULT = 8, Reducing sub steps can make the app more performant, but the interface less responsive.
+SUB_STEPS = 12           # DEFAULT = 12, Reducing sub steps can make the app more performant, but the interface less responsive.
 
 # TEXT ELEMENTS
 INTRO_TEXT = ("\n                                        oo          dP    oo\n                                                    88      \n                          88d8b.d8b.    dP    .d888b88    dP\n                          88'`88'`88    88    88'  `88    88\n                          88  88  88    88    88.  .88    88\n                          dP  dP  dP    dP    `88888P8    dP\n                                                            \n  dP                              dP                        \n  88                              88                        \nd8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.\n  88   88'  `88 88\'  `88 88\'  `\"\" 88888\"   88ooood8 88'  `88\n  88   88       88.  .88 88.  ... 88  `8b. 88.  ... 88      \n  dP   dP       `8888'P8 `88888P' dP   `YP `88888P' dP      \n ")
@@ -522,6 +522,8 @@ def play_song(song):
     global current_notes_buffer
     global sub_step
 
+    outport.send(mido.Message('clock'))
+
     if(sub_step == 0):
         for song_channel in range(MAX_CHANNELS):
             
@@ -553,6 +555,7 @@ def play_song(song):
     if chain_step >= MAX_CHAIN_STEPS:
         chain_step = 0
         song_step +=1
+        outport.send(mido.Message('start'))
     
     if song_step >= loop_length:
         song_step = 0
