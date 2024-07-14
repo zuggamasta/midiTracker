@@ -378,6 +378,8 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         global last_notes_buffer
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+        outport.send(mido.Message('start'))
+
     
     elif key == KEYMAP["save"]:
         save_state()
