@@ -23,24 +23,36 @@ MidiTracker is a small tracker that sequences notes in a nested vertical layout.
 I'm building this whole thing with python **3.9.10.** And I have close to no experience with python. You'll need a python environment with mido, rtmidi and curses modules installed.
 
 ### Quick Install Guide:
-```
+```shell
 git clone https://github.com/zuggamasta/midiTracker.git
 ```
-```
+```shell
 cd midiTracker/
 ```
-```
+```shell
 python3 -m venv venv/
 ```
-```
+```shell
 source venv/bin/activate
 ```
-```
+```shell
 python -m pip install mido[ports-rtmidi]
 ```
-```
+```shell
 python midiTracker.py
 ```
+
+
+### midiTracker is crashing on start
+```shell
+Traceback (most recent call last):
+...
+    if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
+UnboundLocalError: local variable 'available_ports' referenced before assignment
+```
+If you run into this error, please make sure to have installed the right Python version and depnedencies. If the error persists please feel free to open a new issue or [use this issue(43) ](https://github.com/zuggamasta/midiTracker/issues/43) to get help.
+
+
 
 For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
 
