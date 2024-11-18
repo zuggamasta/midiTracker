@@ -119,6 +119,8 @@ current_modifier_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)
 current_cc_buffer = [[None for _ in range(2)] for _ in range(MAX_CHANNELS)]
 visualizer_buffer = None
 
+channel_velocity = [1 for _ in range(MAX_CHANNELS)]
+
 last_notes_buffer =    [None for _ in range(MAX_CHANNELS)]
 active_chain_buffer = []
 active_phrase_buffer = []
@@ -601,26 +603,26 @@ def play_notes(notes, modifiers, cc):
 
         if notes[channel] != None:
             if modifiers[channel][0] == None:
-                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
             
             elif  modifiers[channel][0] == 3: # RND
                 if modifiers[channel][1] == None:
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
                 else:
                     modifier_value =  modifiers[channel][1]
                     if modifier_value == None:
                         modifier_value == 0
                     modifier_value =  random.randint(0,modifier_value)
                     notes[channel] = (notes[channel]+modifier_value)%127
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
             
-            elif  modifiers[channel][0] == 2: # RND
+            elif  modifiers[channel][0] == 2: # JMP
                 if modifiers[channel][1] == None:
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
                 else:
                     jump = random.randint(0, modifiers[channel][1]) #compare to 0?
                     if jump == 0:
-                        outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=120))
+                        outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
                     else:
                         pass
 
@@ -775,6 +777,8 @@ def update_visualizer(scr):
     global SECONDARY
     global TERTIARY
 
+    global channel_velocity
+
 
     try:
         key = scr.getkey()
@@ -797,6 +801,23 @@ def update_visualizer(scr):
         TERTIARY = SECONDARY
         SECONDARY = PRIMARY
         PRIMARY = tmp
+    
+    if key == "a":
+        channel_velocity[0] = abs(1-channel_velocity[0])
+    if key == "s":
+        channel_velocity[1] = abs(1-channel_velocity[1])
+    if key == "d":
+        channel_velocity[2] = abs(1-channel_velocity[2])
+    if key == "f":
+        channel_velocity[3] = abs(1-channel_velocity[3])
+    if key == "g":
+        channel_velocity[4] = abs(1-channel_velocity[4])
+    if key == "h":
+        channel_velocity[5] = abs(1-channel_velocity[5])
+    if key == "j":
+        channel_velocity[6] = abs(1-channel_velocity[6])
+    if key == "k":
+        channel_velocity[7] = abs(1-channel_velocity[7])
         
 
 def draw_visualizer(win,render_style="tet"):
@@ -835,6 +856,7 @@ def draw_visualizer(win,render_style="tet"):
             if( visualizer_buffer[1][channel] < 1 ): visualizer_buffer[1][channel] = WIDTH-7
 
             win.addstr(phrase_step+1,int(visualizer_buffer[1][channel]),f"{note_render} ")
+            win.addstr(17,0,f"{channel_velocity}")
 
         if sub_step == 0:
 
@@ -978,6 +1000,7 @@ def main(stdscr):
         elif current_screen == 4:
             draw_visualizer(visualizer_win)
             update_visualizer(stdscr)
+
         else:
             # fallback in case a non available screen number gets selected error happens
             pass
