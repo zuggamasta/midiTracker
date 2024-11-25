@@ -150,6 +150,11 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 ![Chain editor](/Documentation/screen_3.png)
 
 
+## Little Helpers
+I collect a small list of patches for pureData [pd-patches](https://github.com/zuggamasta/pd-patches/
+) to debug and play with midiTracker if there is no hardware or other software around.
+
+
 ## Thank you
 Thank you to everyone helping and making all of this possible. Thank you Mirjam, Thank you Fiona, thank you Sylt, thank you Markus.
 
