@@ -54,9 +54,6 @@ If you run into this error, please make sure to have installed the right Python 
 
 
 
-For artists, beginners or other curious folk you can [read the installation guide here if you want help getting started](https://github.com/zuggamasta/midiTracker/wiki/Installing-midiTracker-(Beginner-Friendly)). I also tried to explain some basic info on how to use command line git to clone a repository for a workflow where you do not need to leave your terminal.
-
-
 ### Starting midiTracker after Installation
 First navigate to the midiTracker folder
 ```
