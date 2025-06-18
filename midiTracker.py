@@ -748,11 +748,6 @@ def draw_info(win,midiport):
         win.addstr(i+1,j+8,f"{str(current_notes_buffer[6] or '---').zfill(3)}")
         win.addstr(i+1,j+12,f"{str(current_notes_buffer[7] or '---').zfill(3)}")
 
-
-
-
-
-
         win.refresh()
 
 
