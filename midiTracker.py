@@ -1,4 +1,4 @@
-#v0.5
+#v0.6
 # PYTHON UTILITY MODULES
 import sys
 import time
@@ -30,7 +30,7 @@ SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_MIDI = 128
 HEIGHT, WIDTH = 0,0 # Will be set by the program to the height and with of the available screen in Chracters.
-MAX_CONFIG_STEPS = 4    # DO NOT CHANGE
+MAX_CONFIG_STEPS = 5    # DO NOT CHANGE
 MAX_CHAIN_PARAMETERS = 2
 MAX_PHRASE_PARAMETERS = 7
 
@@ -148,7 +148,7 @@ phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(MAX_PHRAS
 # CONFIG DATA
 current_config = 0
 config_data = []
-config=  [[0x01,120,8,0xab],["Midi Device","BPM","loop_length","not yet defined"] ]  
+config=  [[0x01,120,8,0xab,1],["Midi Device","BPM","loop_length","autosaveing","channel_mutes"] ]  
 config_data.append(config)
 
 def draw_debug(scr,value):
@@ -224,6 +224,7 @@ def save_state():
         json.dump(save_state_data, fp, allow_nan=False)  # Use indent=4 for a pretty-formatted JSON file
 
 def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 12):
+    # all the things we want to modify on input
     global song_step
     global chain_step
     global phrase_step
@@ -672,7 +673,7 @@ def draw_intro(scr):
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
         # draw version no on top left
-        scr.addstr(0,0,f"v0.5")
+        scr.addstr(0,0,f"v0.6")
         # draw terminal size on bottom right
         scr.addstr(HEIGHT-1,WIDTH-2-len(str(WIDTH)+str(HEIGHT)),f"{HEIGHT}×{WIDTH}")
         scr.refresh()
@@ -685,7 +686,6 @@ def draw_info(win,midiport):
         win.border()
         # i will be the vertical and j the horizontal position
         i,j = 1,1
-
 
         # blinking dot to show that the program is working
         if is_song_playing:
@@ -729,9 +729,7 @@ def draw_info(win,midiport):
         else:
             win.addstr(i,j,f"  Mod2  ")
 
-        
         i+=2
-        
         
         # noteinfo = None
         # if current_notes_buffer[0] == None:
@@ -755,8 +753,6 @@ def draw_info(win,midiport):
 
         win.refresh()
 
-
- 
 def setup_colors():
 
     global PRIMARY
@@ -778,7 +774,6 @@ def update_visualizer(scr):
     global TERTIARY
 
     global channel_velocity
-
 
     try:
         key = scr.getkey()
@@ -802,22 +797,24 @@ def update_visualizer(scr):
         SECONDARY = PRIMARY
         PRIMARY = tmp
     
-    if key == "a":
-        channel_velocity[0] = abs(1-channel_velocity[0])
-    if key == "s":
-        channel_velocity[1] = abs(1-channel_velocity[1])
-    if key == "d":
-        channel_velocity[2] = abs(1-channel_velocity[2])
-    if key == "f":
-        channel_velocity[3] = abs(1-channel_velocity[3])
-    if key == "g":
-        channel_velocity[4] = abs(1-channel_velocity[4])
-    if key == "h":
-        channel_velocity[5] = abs(1-channel_velocity[5])
-    if key == "j":
-        channel_velocity[6] = abs(1-channel_velocity[6])
-    if key == "k":
-        channel_velocity[7] = abs(1-channel_velocity[7])
+    # only draw channel mutes if enabled in config
+    if config_data[0][0][4] > 0:
+        if key == "a":
+            channel_velocity[0] = abs(1-channel_velocity[0])
+        if key == "s":
+            channel_velocity[1] = abs(1-channel_velocity[1])
+        if key == "d":
+            channel_velocity[2] = abs(1-channel_velocity[2])
+        if key == "f":
+            channel_velocity[3] = abs(1-channel_velocity[3])
+        if key == "g":
+            channel_velocity[4] = abs(1-channel_velocity[4])
+        if key == "h":
+            channel_velocity[5] = abs(1-channel_velocity[5])
+        if key == "j":
+            channel_velocity[6] = abs(1-channel_velocity[6])
+        if key == "k":
+            channel_velocity[7] = abs(1-channel_velocity[7])
         
 
 def draw_visualizer(win,render_style="tet"):
@@ -856,7 +853,11 @@ def draw_visualizer(win,render_style="tet"):
             if( visualizer_buffer[1][channel] < 1 ): visualizer_buffer[1][channel] = WIDTH-7
 
             win.addstr(phrase_step+1,int(visualizer_buffer[1][channel]),f"{note_render} ")
-            win.addstr(17,0,f"{channel_velocity}")
+
+            # only draw channel mutes if enabled in config
+            if config_data[0][0][4] > 0:
+                win.addstr(17,0,f"{HEADER_STRING}")
+                win.addstr(18,2,f"{'   '.join(map(str, channel_velocity))}")  # TODO: Draw this nicer
 
         if sub_step == 0:
 
@@ -866,32 +867,73 @@ def draw_visualizer(win,render_style="tet"):
 
     is_dirty = False
 
-def draw_rample(win,pos):
-
-    help_files = ["miditracker.txt","rample_midi.txt","op-z_midi.txt"]
-    i = HELP_SCROLL_X
+def update_help_file(scr):
+    global HELP_SCROLL_Y
+    global HELP_SCROLL_X
     global HELP_TEXT_FILE
+    global current_screen
 
-    viewport = ""
-    if len(HELP_TEXT_FILE) <=1:
+    # capture key strokes
+    try:
+        key = scr.getkey()
+    except:
+        key = None
+
+    if key == KEYMAP["up"]:
+        HELP_SCROLL_Y -= 1
+    elif key == KEYMAP["down"]:
+        HELP_SCROLL_Y += 1
+    elif key == KEYMAP["left"]:
+        HELP_TEXT_FILE = []
+        HELP_SCROLL_X -= 1
+        HELP_SCROLL_Y = 0
+    elif key == KEYMAP["right"]:
+        HELP_TEXT_FILE = []
+        HELP_SCROLL_X += 1
+        HELP_SCROLL_Y = 0
+    elif key == KEYMAP["song"]:
+        HELP_TEXT_FILE = []
+        current_screen = 0
+
+    # clamp values
+    HELP_SCROLL_Y = max(0,HELP_SCROLL_Y)
+    HELP_SCROLL_X = max(0,HELP_SCROLL_X)
+    HELP_SCROLL_X = min(HELP_SCROLL_X,2) # TODO: This needs to be adjusted to the amount of files (0 indexed)
+
+def draw_help_file(win):
+
+    global HELP_TEXT_FILE # we store the help file to be drawn as array of strings here
+
+    # help files to be loaded
+    help_files = ["miditracker.txt","rample_midi.txt","op-z_midi.txt"]
+    viewport = "" # TODO: this should be a pad
+
+    if len(HELP_TEXT_FILE) < 1:
+        # only do this once per on first screen if our line array has been empty before
         try:
-            with open(f"help/"+ help_files[i], "r") as fp:
-                HELP_TEXT_FILE = fp.readlines()
-
+            # try to open from help folder
+            with open(f"help/"+ help_files[HELP_SCROLL_X], "r") as file:
+                HELP_TEXT_FILE = file.readlines()
         except:
-            viewport = "Faild to load "+ help_files[i] + " file"
+            # throw exception and write to viewport
+            viewport = "Faild to load "+ help_files[HELP_SCROLL_X] + " file."
     else:
+        # if our line array is not write all lines to the viewport and keep some padding to the bottom
         for line in range(HEIGHT-2):
-            if line+pos < len(HELP_TEXT_FILE)-1:
-                viewport += HELP_TEXT_FILE[line+pos]
+            if line+HELP_SCROLL_Y < len(HELP_TEXT_FILE)-1:
+                viewport += HELP_TEXT_FILE[line+HELP_SCROLL_Y]
 
+    # draw the viewport
     win.addstr(0,0,viewport)
 
-    scroll_bar = HEIGHT/len(HELP_TEXT_FILE)*pos
+    # calculate a scroll bar
+    scroll_bar = HEIGHT/len(HELP_TEXT_FILE)*HELP_SCROLL_Y
     scroll_bar = min(scroll_bar,HEIGHT-2)
     
+    # draw scroll bar
     win.addstr(int(scroll_bar),45,"▌")
-    win.addstr(0,47,help_files[i])
+
+    win.addstr(0,47,help_files[HELP_SCROLL_X][:16])
 
     if is_dirty:
         not is_dirty
@@ -901,6 +943,7 @@ def draw_rample(win,pos):
 
 def main(stdscr):
 
+    # these will be run once during startup
     global shift_mod_a
     global shift_mod_b
 
@@ -921,7 +964,9 @@ def main(stdscr):
     draw_intro(stdscr)      # Play animated Intro
 
     load_state(autoload=True)   # Load 'savestate.json'
+
     visualizer_win = curses.newwin(int(HEIGHT-1),int(WIDTH-1),0,0)
+    help_file_win = curses.newwin(int(HEIGHT-1),int(WIDTH-1),0,0)
 
     info_win = curses.newwin(18,17,TABLE_HEADER_Y-1,STEP_INFO_X-1)
     data_win = curses.newwin(MAX_PHRASE_STEPS,MAX_CHANNELS*SLOT_WIDTH+2,TABLE_HEADER_Y+1,TABLE_HEADER_X) # needs _ACTUAL_ maximum amount of slots in MAX CHANNLES
@@ -996,7 +1041,7 @@ def main(stdscr):
             # Header
             stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_phrase:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD valPRGC val CC  val",curses.A_REVERSE | shift_mod_color)
-            
+
             # DATA
             channels = MAX_PHRASE_PARAMETERS
             steps = MAX_PHRASE_STEPS
@@ -1024,43 +1069,21 @@ def main(stdscr):
             stdscr.addstr(TABLE_HEADER_Y+2,TABLE_HEADER_X+6,"Beats per Minute")
             stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Loop Length")
             stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
+            stdscr.addstr(TABLE_HEADER_Y+5,TABLE_HEADER_X+6,"Enable Channle Mutes") # currently maximum name length
 
             stdscr.refresh()
 
         elif current_screen == 4:
+            # VISUALIZER VIEW
+            # this view can only escaped by going back to song view
             draw_visualizer(visualizer_win)
             update_visualizer(stdscr)
 
         elif current_screen == 5:
-            global HELP_SCROLL_Y
-            global HELP_SCROLL_X
-            global HELP_TEXT_FILE
-
-            try:
-                key = stdscr.getkey()
-            except:
-                key = None
-
-            if key == KEYMAP["up"]:
-                HELP_SCROLL_Y -= 1
-            elif key == KEYMAP["down"]:
-                HELP_SCROLL_Y += 1
-            elif key == KEYMAP["left"]:
-                HELP_TEXT_FILE = []
-                HELP_SCROLL_X -= 1
-                HELP_SCROLL_Y = 0
-            elif key == KEYMAP["right"]:
-                HELP_TEXT_FILE = []
-                HELP_SCROLL_X += 1
-                HELP_SCROLL_Y = 0
-            elif key == KEYMAP["song"]:
-                current_screen = 0
-
-            HELP_SCROLL_Y = max(0,HELP_SCROLL_Y)
-            HELP_SCROLL_X = max(0,HELP_SCROLL_X)
-            HELP_SCROLL_X = min(HELP_SCROLL_X,2)
-
-            draw_rample(visualizer_win,HELP_SCROLL_Y)
+            # HELP FILE VIEWER
+            # TODO: this view currently can only escpaed by going back to song view
+            update_help_file(stdscr)
+            draw_help_file(help_file_win)
 
         else:
             # fallback in case a non available screen number gets selected error happens
