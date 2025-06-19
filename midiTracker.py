@@ -34,11 +34,10 @@ MAX_CONFIG_STEPS = 4    # DO NOT CHANGE
 MAX_CHAIN_PARAMETERS = 2
 MAX_PHRASE_PARAMETERS = 7
 
-
 # USER EDITABLE CONSTANTS
 MAX_CHANNELS = 8       # DEFAULT = 8
-MAX_SONG_STEPS = 16      # DEFAULT = 8
-MAX_CHAIN_STEPS = 4     # DEFAULT = 4
+MAX_SONG_STEPS = 16      # DEFAULT = 16
+MAX_CHAIN_STEPS = 8     # DEFAULT = 8
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
 SUB_STEPS = 12           # DEFAULT = 12, Reducing sub steps can make the app more performant, but the interface less responsive.
@@ -49,6 +48,9 @@ HELP_TEXT_SONG="Use the modifiers switch between cursor movement and editing val
 HELP_TEXT_CHAIN="Use chains to connect multiple phrases together. Each new chain is filled with phrases. "
 HELP_TEXT_PHRASE="Use phrases to arrange notes on a sixteenth grid. "
 HELP_TEXT_CONFIG="Use the configuration page to set Midi device, tempo and other settings. "
+HELP_TEXT_FILE = []
+HELP_SCROLL_X = 0
+HELP_SCROLL_Y = 0
 HEADER_STRING = "Chn1Chn2Chn3Chn4RmplChn6Chn7Chn8Chn9Ch10Ch11Ch12Ch13Ch14Ch15Ch16"[0:MAX_CHANNELS*SLOT_WIDTH]
 
 # INPUT
@@ -335,6 +337,9 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         shift_mod_a, shift_mod_b = False, False
     elif key == KEYMAP["visualizer"]:
         current_screen = 4
+        shift_mod_a, shift_mod_b = False, False
+    elif key == "6": #help page
+        current_screen = 5
         shift_mod_a, shift_mod_b = False, False
 
      # SWITCH CHAIN / SONG / PHRASE  kUP5 kDN5
@@ -861,6 +866,37 @@ def draw_visualizer(win,render_style="tet"):
 
     is_dirty = False
 
+def draw_rample(win,pos):
+
+    help_files = ["miditracker.txt","rample_midi.txt","op-z_midi.txt"]
+    i = HELP_SCROLL_X
+    global HELP_TEXT_FILE
+
+    viewport = ""
+    if len(HELP_TEXT_FILE) <=1:
+        try:
+            with open(f"help/"+ help_files[i], "r") as fp:
+                HELP_TEXT_FILE = fp.readlines()
+
+        except:
+            viewport = "Faild to load "+ help_files[i] + " file"
+    else:
+        for line in range(HEIGHT-2):
+            if line+pos < len(HELP_TEXT_FILE)-1:
+                viewport += HELP_TEXT_FILE[line+pos]
+
+    win.addstr(0,0,viewport)
+
+    scroll_bar = HEIGHT/len(HELP_TEXT_FILE)*pos
+    scroll_bar = min(scroll_bar,HEIGHT-2)
+    
+    win.addstr(int(scroll_bar),45,"▌")
+    win.addstr(0,47,help_files[i])
+
+    if is_dirty:
+        not is_dirty
+        win.refresh()
+
 # Main Program 
 
 def main(stdscr):
@@ -961,7 +997,6 @@ def main(stdscr):
             stdscr.addstr(TABLE_HEADER_Y-1,TABLE_HEADER_X,f"{SCREENS[current_screen]} {current_phrase:02}      ")
             stdscr.addstr(TABLE_HEADER_Y,TABLE_HEADER_X,f"Note MOD valPRGC val CC  val",curses.A_REVERSE | shift_mod_color)
             
-
             # DATA
             channels = MAX_PHRASE_PARAMETERS
             steps = MAX_PHRASE_STEPS
@@ -995,6 +1030,37 @@ def main(stdscr):
         elif current_screen == 4:
             draw_visualizer(visualizer_win)
             update_visualizer(stdscr)
+
+        elif current_screen == 5:
+            global HELP_SCROLL_Y
+            global HELP_SCROLL_X
+            global HELP_TEXT_FILE
+
+            try:
+                key = stdscr.getkey()
+            except:
+                key = None
+
+            if key == KEYMAP["up"]:
+                HELP_SCROLL_Y -= 1
+            elif key == KEYMAP["down"]:
+                HELP_SCROLL_Y += 1
+            elif key == KEYMAP["left"]:
+                HELP_TEXT_FILE = []
+                HELP_SCROLL_X -= 1
+                HELP_SCROLL_Y = 0
+            elif key == KEYMAP["right"]:
+                HELP_TEXT_FILE = []
+                HELP_SCROLL_X += 1
+                HELP_SCROLL_Y = 0
+            elif key == KEYMAP["song"]:
+                current_screen = 0
+
+            HELP_SCROLL_Y = max(0,HELP_SCROLL_Y)
+            HELP_SCROLL_X = max(0,HELP_SCROLL_X)
+            HELP_SCROLL_X = min(HELP_SCROLL_X,2)
+
+            draw_rample(visualizer_win,HELP_SCROLL_Y)
 
         else:
             # fallback in case a non available screen number gets selected error happens

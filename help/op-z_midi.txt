@@ -27,4 +27,8 @@ mute           53   1-16  0-1
 audio mute     54   1-16  0-1
 
 
-The OP-Z midi configuration can be set using the OP-Z app. using the app it is also possible to assign the midi cc values and midi send channels for each track.
+The OP-Z midi configuration can be
+set using the OP-Z app. using the app
+it is also possible to assign the
+midi cc values and midi send channels
+for each track.

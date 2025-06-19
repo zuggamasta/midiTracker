@@ -1,0 +1,64 @@
+▔▔▔▔▔▔▔▔▔▔▔▔▔ MIDITRACKER ▔▔▔▔▔▔▔▔▔▔▔▔▔
+
+MidiTracker is a small tracker that
+sequences notes in a nested vertical
+layout. The UI is heavily inspired by
+LSDJ and other trackers from the past,
+present and future. To make it
+portable and useful on all kinds of
+plattforms I've choosen python for it
+with minimalist curses / ASCII user
+interface.
+
+
+▁▁▁▁▁▁▁▁▁▁▁Change Screens:▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+
+ Keys 1 - &
+Brings you to the different screens.
+In the order Song, Chain, Phrase,
+Config, Visualizer and Help.
+
+▁▁▁▁▁▁▁▁▁▁▁Move the cursor:▁▁▁▁▁▁▁▁▁▁▁▁▁
+
+ Arrow Keys ← → ↑ ↓
+Navigation on Data Grid and read
+manuals on the Help screen.
+
+▁▁▁▁▁▁▁▁▁▁▁▁▁Edit Values:▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+
+a : Modifier 1 (green highlights)
+
+  Mod1 + ←  : -12 units / 1 Octave
+  Mod1 + →  : +12 units / 1 Octave
+  Mod1 + ↓  : -1 unit / Semitone
+  Mod1 + ↑  : +1 / Semitone
+
+c : copy value
+  shift + c  : deep copy, copies
+	the current phrase content
+
+v : paste value
+  shift + v : flood value, writes
+  copy buffer to all steps or
+  deep copy buffer if one is available
+
+▁▁▁▁▁▁▁View Chains and Phrases:▁▁▁▁▁▁▁▁▁
+	
+  s : Modifier 2 (red highlights)
+
+  Mod2 + ↓ : View next Phrase or Chain
+  Mod2 + ↑ : View last Phrase or Chain
+
+  The arrows for switching between
+  chains and phrases are fipped as it
+  made more sense for me. Makes it feel
+  like there is a wheel you scroll
+  through to get to the element you're
+  looking for.
+
+▁▁▁▁▁▁▁▁▁▁▁▁Other controls:▁▁▁▁▁▁▁▁▁▁▁▁▁
+
+  w         : Panic (stops all Midi)
+  Space     : Stop / Restart Song
+  Shift + s : Save
+  Shift + q : Quit
