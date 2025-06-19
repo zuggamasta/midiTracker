@@ -1,5 +1,5 @@
 ```
-v0.5                                    oo          dP    oo 
+v0.6                                    oo          dP    oo 
                                                     88       
                           88d8b.d8b.    dP    .d888b88    dP 
                           88'`88'`88    88    88'  `88    88 
@@ -93,7 +93,7 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 ### Change Screens
 
-```Number Keys 1 - 5``` :  Brings you to the different screens. In the order Song, Chain, Phrase, Confing, Visualizer.
+```Number Keys 1 - 6``` :  Brings you to the different screens. In the order Song, Chain, Phrase, Config, Visualizer and Help Files
 
 ### Move the cursor:
 
@@ -148,8 +148,8 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 
 ## Little Helpers
-I collect a small list of patches for pureData [pd-patches](https://github.com/zuggamasta/pd-patches/
-) to debug and play with midiTracker if there is no hardware or other software around.
+I collect a small list of patches for pureData [pd-patches](https://github.com/zuggamasta/pd-patches/) to debug and play with midiTracker if there is no hardware or other software around.
+Use the help file view ```6``` to view some included help files.
 
 
 ## Thank you
