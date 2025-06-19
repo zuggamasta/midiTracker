@@ -894,6 +894,15 @@ def update_help_file(scr):
     elif key == KEYMAP["song"]:
         HELP_TEXT_FILE = []
         current_screen = 0
+    elif key == KEYMAP["chain"]:
+        HELP_TEXT_FILE = []
+        current_screen = 1
+    elif key == KEYMAP["phrase"]:
+        HELP_TEXT_FILE = []
+        current_screen = 2
+    elif key == KEYMAP["visualizer"]:
+        HELP_TEXT_FILE = []
+        current_screen = 4
 
     # clamp values
     HELP_SCROLL_Y = max(0,HELP_SCROLL_Y)
@@ -1081,7 +1090,6 @@ def main(stdscr):
 
         elif current_screen == 5:
             # HELP FILE VIEWER
-            # TODO: this view currently can only escpaed by going back to song view
             update_help_file(stdscr)
             draw_help_file(help_file_win)
 
