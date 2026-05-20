@@ -571,7 +571,7 @@ def play_song(song):
     if chain_step >= MAX_CHAIN_STEPS:
         chain_step = 0
         song_step +=1
-        outport.send(mido.Message('start'))
+        # outport.send(mido.Message('start'))
     
     if song_step >= loop_length:
         song_step = 0
