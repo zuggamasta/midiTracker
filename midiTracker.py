@@ -72,7 +72,6 @@ KEYMAP = {
     "phrase":   "3",
     "config":   "4",
     "visualizer":"5",
-    "help":     "h",
     "copy":     "c",
     "paste":    "v",
     "deepcopy": "C",
@@ -322,7 +321,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
     elif current_screen == 2:
         active_data = current_phrase
     elif current_screen == 3:
-        active_data == current_config
+        active_data = current_config
 
     if key == KEYMAP["song"]:
         current_screen = 0
@@ -353,7 +352,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         # PHRASE SCREEN
         if current_screen == 2:
             if current_phrase+2 > len(phrase_data) :
-                phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(2)])
+                phrase_data.append([[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(MAX_PHRASE_PARAMETERS)])
             current_phrase += 1
         
     elif key == KEYMAP["up"] and shift_mod_b:
@@ -588,7 +587,7 @@ def play_phrase(phrase_no,transpose, channel):
         note = phrase_data[phrase_no][0][phrase_step]
         if note != None:
             note += transpose
-            note = note%127
+            note = note%128
         modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
         cc = phrase_data[phrase_no][5][phrase_step],phrase_data[phrase_no][6][phrase_step]
         save_note(note, modifier, cc, channel)
@@ -617,7 +616,7 @@ def play_notes(notes, modifiers, cc):
                 else:
                     modifier_value =  modifiers[channel][1]
                     if modifier_value == None:
-                        modifier_value == 0
+                        modifier_value = 0
                     modifier_value =  random.randint(0,modifier_value)
                     notes[channel] = (notes[channel]+modifier_value)%127
                     outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
@@ -945,7 +944,7 @@ def draw_help_file(win):
     win.addstr(0,47,help_files[HELP_SCROLL_X][:16])
 
     if is_dirty:
-        not is_dirty
+        is_dirty = False
         win.refresh()
 
 # Main Program 
