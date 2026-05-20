@@ -23,7 +23,14 @@ from curses import panel
 
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG","VISUALIZER"]
 
-MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg","PC1"]
+MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg"," MAJ"," MIN"," DIM"," MA7"," MI7"]
+CHORD_INTERVALS = {
+    6:  [4, 7],        # MAJ
+    7:  [3, 7],        # MIN
+    8:  [3, 6],        # DIM
+    9:  [4, 7, 11],    # MA7
+    10: [3, 7, 10],    # MI7
+}
 MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
@@ -607,8 +614,13 @@ def play_notes(notes, modifiers, cc):
             outport.send(Message('control_change', channel=channel, control=cc[channel][0], value=cc[channel][1]))
 
         if notes[channel] != None:
-            if modifiers[channel][0] == None:
+            mod = modifiers[channel][0]
+            if mod in CHORD_INTERVALS:
+                for i in [0] + CHORD_INTERVALS[mod]:
+                    outport.send(Message('note_on', channel=channel, note=(notes[channel]+i)%128, velocity=channel_velocity[channel]*120))
+            elif mod == None:
                 outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
+
             
             elif  modifiers[channel][0] == 3: # RND
                 if modifiers[channel][1] == None:
@@ -618,7 +630,7 @@ def play_notes(notes, modifiers, cc):
                     if modifier_value == None:
                         modifier_value = 0
                     modifier_value =  random.randint(0,modifier_value)
-                    notes[channel] = (notes[channel]+modifier_value)%127
+                    notes[channel] = (notes[channel]+modifier_value)%128
                     outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
             
             elif  modifiers[channel][0] == 2: # JMP
@@ -635,7 +647,12 @@ def play_notes(notes, modifiers, cc):
 def stop_notes(notes):
     for channel in range(MAX_CHANNELS):
         if notes[channel] != None:
-            outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
+            mod = current_modifier_buffer[channel][0]
+            if mod in CHORD_INTERVALS:
+                for i in [0] + CHORD_INTERVALS[mod]:
+                    outport.send(Message('note_off', channel=channel, note=(notes[channel]+i)%128, velocity=120))
+            else:
+                outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
 
 def play_rest():
     pass
@@ -871,12 +888,15 @@ def update_help_file(scr):
     global HELP_SCROLL_X
     global HELP_TEXT_FILE
     global current_screen
+    global is_dirty
 
     # capture key strokes
     try:
         key = scr.getkey()
     except:
         key = None
+        
+    if key is not None: is_dirty = True
 
     if key == KEYMAP["up"]:
         HELP_SCROLL_Y -= 1
@@ -910,6 +930,8 @@ def update_help_file(scr):
 
 def draw_help_file(win):
 
+    global is_dirty 
+
     global HELP_TEXT_FILE # we store the help file to be drawn as array of strings here
 
     # help files to be loaded
@@ -922,9 +944,11 @@ def draw_help_file(win):
             # try to open from help folder
             with open(f"help/"+ help_files[HELP_SCROLL_X], "r") as file:
                 HELP_TEXT_FILE = file.readlines()
+                is_dirty = True
         except:
             # throw exception and write to viewport
             viewport = "Faild to load "+ help_files[HELP_SCROLL_X] + " file."
+            is_dirty = True
     else:
         # if our line array is not write all lines to the viewport and keep some padding to the bottom
         for line in range(HEIGHT-2):
@@ -935,7 +959,7 @@ def draw_help_file(win):
     win.addstr(0,0,viewport)
 
     # calculate a scroll bar
-    scroll_bar = HEIGHT/len(HELP_TEXT_FILE)*HELP_SCROLL_Y
+    scroll_bar = HEIGHT/max(1, len(HELP_TEXT_FILE))*HELP_SCROLL_Y
     scroll_bar = min(scroll_bar,HEIGHT-2)
     
     # draw scroll bar
@@ -960,6 +984,7 @@ def main(stdscr):
 
     global bpm
     global loop_length
+    global MIDI_PORT
     global outport
     outport = None
 
@@ -1000,8 +1025,9 @@ def main(stdscr):
         # Make sure to setup a Midiport
         if outport == None or MIDI_PORT != config_data[0][0][0]:
             MIDI_PORT = config_data[0][0][0]
+            available_ports = []
             try:
-                available_ports = mido.get_input_names()
+                available_ports = mido.get_output_names()
                 if MIDI_PORT >= len(available_ports):
                     MIDI_PORT = 0
                     config_data[0][0][0] = 0
