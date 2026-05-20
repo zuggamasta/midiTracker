@@ -949,7 +949,7 @@ def draw_help_file(win):
             # throw exception and write to viewport
             viewport = "Faild to load "+ help_files[HELP_SCROLL_X] + " file."
             is_dirty = True
-    else:
+    if len(HELP_TEXT_FILE) > 0:
         # if our line array is not write all lines to the viewport and keep some padding to the bottom
         for line in range(HEIGHT-2):
             if line+HELP_SCROLL_Y < len(HELP_TEXT_FILE)-1:
