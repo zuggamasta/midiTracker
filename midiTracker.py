@@ -90,9 +90,8 @@ CENTER_GAP = 10
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 4
 STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
 
-# PROFILING / TIMING HELPERS
-time_last = 0
-time_now = 0
+# TIMING
+next_tick = 0.0
 
 ################################
 #          VARIABLES           #
@@ -390,8 +389,10 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         sub_step = 0
         global current_notes_buffer
         global last_notes_buffer
+        global next_tick
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+        next_tick = time.time()
         outport.send(mido.Message('start'))
 
     
@@ -537,8 +538,10 @@ def play_song(song):
     global song_data
     global current_notes_buffer
     global sub_step
+    global next_tick
 
-    outport.send(mido.Message('clock'))
+    # UNCOMMENT THIS IF YOU WANT EXPERIMENTAL MIDI CLOCK OUT
+    # outport.send(mido.Message('clock'))
 
     if(sub_step == 0):
         for song_channel in range(MAX_CHANNELS):
@@ -551,16 +554,19 @@ def play_song(song):
                     pass
         play_notes(current_notes_buffer,current_modifier_buffer,current_cc_buffer)
 
-    if (time_now-time_last) < (60/bpm/4/SUB_STEPS):
-        time.sleep((60/bpm/4/SUB_STEPS)-(time_now-time_last))
-    else:
-        time.sleep((60/bpm/4/SUB_STEPS))
+    now = time.time()
+    if next_tick == 0.0:
+        next_tick = now
+    sleep_time = next_tick - now
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+    next_tick += (60 / bpm / 4 / SUB_STEPS)
 
     sub_step += 1
 
     if(sub_step >= SUB_STEPS):
         stop_notes(current_notes_buffer)
-        phrase_step += 1 
+        phrase_step += 1
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         sub_step = 0
 
@@ -571,7 +577,7 @@ def play_song(song):
     if chain_step >= MAX_CHAIN_STEPS:
         chain_step = 0
         song_step +=1
-        # outport.send(mido.Message('start'))
+        outport.send(mido.Message('start'))
     
     if song_step >= loop_length:
         song_step = 0
@@ -979,8 +985,7 @@ def main(stdscr):
     global shift_mod_a
     global shift_mod_b
 
-    global time_last
-    global time_now
+    global next_tick
 
     global bpm
     global loop_length
@@ -1038,7 +1043,7 @@ def main(stdscr):
             
             stdscr.clear()
                           
-        time_last = time.time()
+
 
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
@@ -1125,7 +1130,6 @@ def main(stdscr):
         # draw Playback info of song, chain and phrase step
         if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
 
-        time_now = time.time()
         # DEBUG FRAME TIME
         # stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")
 
@@ -1137,4 +1141,3 @@ def main(stdscr):
 # Make sure that the app is only executed as script
 if __name__ == "__main__":
     wrapper(main)
-
