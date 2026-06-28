@@ -41,7 +41,6 @@ python -m pip install mido[ports-rtmidi]
 python midiTracker.py
 ```
 
-
 ### midiTracker is crashing on start
 ```shell
 Traceback (most recent call last):
@@ -51,8 +50,6 @@ UnboundLocalError: local variable 'available_ports' referenced before assignment
 ```
 If you run into this error, please make sure to have installed the right Python version and depnedencies. If the error persists please feel free to open a new issue or [use this issue(43) ](https://github.com/zuggamasta/midiTracker/issues/43) to get help.
 
-
-
 ### Starting midiTracker after Installation
 First navigate to the midiTracker folder
 ```
@@ -61,8 +58,6 @@ source venv/bin/activate
 ```
 python midiTracker.py
 ```
-
-
 
 ```
 
@@ -164,11 +159,9 @@ To make it easy and simple to sync Miditracker with multiple clients, you can sp
 
 ![Chain editor](/Documentation/screen_3.png)
 
-
 ## Little Helpers
 I collect a small list of patches for pureData [pd-patches](https://github.com/zuggamasta/pd-patches/) to debug and play with midiTracker if there is no hardware or other software around.
 Use the help file view ```6``` to view some included help files.
-
 
 ## Thank you
 Thank you to everyone helping and making all of this possible. Thank you Mirjam, Thank you Fiona, thank you Sylt, thank you Markus.
