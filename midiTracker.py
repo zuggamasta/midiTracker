@@ -1,4 +1,4 @@
-#v0.6
+#v0.7
 # PYTHON UTILITY MODULES
 import sys
 import time
@@ -15,7 +15,6 @@ from mido import Message
 # CURSES MODULE, Interface rendering
 import curses
 from curses import wrapper
-from curses import panel
 
 ################################
 #          CONSTANTS           #
@@ -23,21 +22,34 @@ from curses import panel
 
 SCREENS = ["SONG","CHAIN","PHRASE","CONFIG","VISUALIZER"]
 
-MODIFIERS_LOOKUP = [" Bck"," Hld"," Jmp"," Rnd"," Stc"," Rtg"," MAJ"," MIN"," DIM"," MA7"," MI7"]
+# Modifiers have four characters
+MODIFIERS_LOOKUP = [" Off"," Rat"," Jmp"," Rnd","none"," Rtg"," MAJ"," MIN"," DIM"," MA7"," MI7"]
 CHORD_INTERVALS = {
-    6:  [4, 7],        # MAJ
-    7:  [3, 7],        # MIN
-    8:  [3, 6],        # DIM
-    9:  [4, 7, 11],    # MA7
-    10: [3, 7, 10],    # MI7
+    6:  [4, 7],        # MAJ major
+    7:  [3, 7],        # MIN minor
+    8:  [3, 6],        # DIM diminished
+    9:  [4, 7, 11],    # MA7 major seventh
+    10: [3, 7, 10],    # MI7 minnor seventh
 }
 MODIFIERS_LEN = len(MODIFIERS_LOOKUP)
+
+# MODIFIER INDICES
+MOD_OFF = 0   # offset note start by 1/value of a step
+MOD_RAT = 1   # ratchet: value 1 accelerating, value 2 decelerating
+MOD_JMP = 2   # random chance to play
+MOD_RND = 3   # random transpose
+MOD_RTG = 5   # retrigger note 'value' times evenly across the step
+
+# ratchet sub_step patterns (within one grid step)
+RAT_FAST = [0, 6, 9, 11]   # gaps 6,3,2 — accelerating
+RAT_SLOW = [0, 1, 3, 6]    # gaps 1,2,3 — decelerating
+
 NOTES_LOOKUP = ['C ','C#','D ','Eb','E ','F ','F#','G ','G#','A ','Bb','B ' ]
 SLOT_WIDTH = 4
 RENDER_STYLE = ['int','hex','tet','chr']
 MAX_MIDI = 128
 HEIGHT, WIDTH = 0,0 # Will be set by the program to the height and with of the available screen in Chracters.
-MAX_CONFIG_STEPS = 5    # DO NOT CHANGE
+MAX_CONFIG_STEPS = 6    # update if you add or remove config rows
 MAX_CHAIN_PARAMETERS = 2
 MAX_PHRASE_PARAMETERS = 7
 
@@ -47,6 +59,7 @@ MAX_SONG_STEPS = 16      # DEFAULT = 16
 MAX_CHAIN_STEPS = 8     # DEFAULT = 8
 MAX_PHRASE_STEPS = 16   # DEFAULT = 16
 MIDI_PORT = 0           # DEFAULT = 0, Initial Midiport, only edit if you know what you're doing.
+MIDI_PORT2 = 0          # Secondary Midiport (disabled when equal to MIDI_PORT)
 SUB_STEPS = 12           # DEFAULT = 12, Reducing sub steps can make the app more performant, but the interface less responsive.
 
 # TEXT ELEMENTS
@@ -90,8 +103,6 @@ CENTER_GAP = 10
 TABLE_HEADER_Y, TABLE_HEADER_X = 2, 4
 STEP_INFO_Y, STEP_INFO_X = 8, TABLE_HEADER_X + MAX_CHANNELS*SLOT_WIDTH + CENTER_GAP +1
 
-# TIMING
-next_tick = 0.0
 
 ################################
 #          VARIABLES           #
@@ -101,6 +112,7 @@ next_tick = 0.0
 sub_step = 0
 help_scroll = 0
 bpm = 90
+next_tick = 0.0
 
 # INTERFACE AND UI
 cursor = [0,0]
@@ -153,11 +165,19 @@ phrase_data = [[[None for _ in range(MAX_PHRASE_STEPS)] for _ in range(MAX_PHRAS
 # CONFIG DATA
 current_config = 0
 config_data = []
-config=  [[0x01,120,8,0xab,1],["Midi Device","BPM","loop_length","autosaveing","channel_mutes"] ]  
+config=  [[0x01,120,8,0xab,1,0x01],["Midi Device","BPM","loop_length","autosaveing","channel_mutes","Midi Device 2"] ]
 config_data.append(config)
+
+################################
+#      HELPER FUNCTIONS        #
+################################
 
 def draw_debug(scr,value):
     scr.addstr(19,0,value)
+
+def send_midi(msg):
+    if outport: outport.send(msg)
+    if outport2: outport2.send(msg)
 
 def load_state(autoload):
     
@@ -213,6 +233,11 @@ def load_state(autoload):
             # print("  not loading   ")
             pass
 
+    # pad config for older saves that predate added settings
+    while len(config_data[0][0]) < MAX_CONFIG_STEPS:
+        config_data[0][0].append(config_data[0][0][0])
+        config_data[0][1].append("Midi Device 2")
+
 def save_state():
 
     save_state_data = []
@@ -227,6 +252,10 @@ def save_state():
 
     with open(f"{formatted_date}.json", "w") as fp:
         json.dump(save_state_data, fp, allow_nan=False)  # Use indent=4 for a pretty-formatted JSON file
+
+################################
+#           INPUT              #
+################################
 
 def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 12):
     # all the things we want to modify on input
@@ -393,7 +422,7 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         last_notes_buffer = [None for _ in range(MAX_CHANNELS)]
         next_tick = time.time()
-        outport.send(mido.Message('start'))
+        send_midi(mido.Message('start'))
 
     
     elif key == KEYMAP["save"]:
@@ -470,14 +499,185 @@ def update_input(scr,data,max_column,max_row,max_value = MAX_MIDI,large_step = 1
         current_config = 0
 
     if data[active_data][cursor[0]][cursor[1]] != None:
-        if data[active_data][cursor[0]][cursor[1]] < 0:
-            data[active_data][cursor[0]][cursor[1]] = max_value-1
-        if data[active_data][cursor[0]][cursor[1]] > max_value-1:
-            data[active_data][cursor[0]][cursor[1]] = 0
+        if current_screen == 2 and cursor[0] == 1:
+            # modifier column cycles through the modifier list
+            data[active_data][cursor[0]][cursor[1]] %= MODIFIERS_LEN
+        else:
+            if data[active_data][cursor[0]][cursor[1]] < 0:
+                data[active_data][cursor[0]][cursor[1]] = max_value-1
+            if data[active_data][cursor[0]][cursor[1]] > max_value-1:
+                data[active_data][cursor[0]][cursor[1]] = 0
     
     scr.refresh()
 
     return cursor
+
+################################
+#           PLAYBACK           #
+################################
+
+def trigger_substeps(mod_type, value):
+    # returns the sub_steps within a grid step where a note_on should fire
+    if value is None or value < 1:
+        value = 1
+    if mod_type == MOD_RTG:
+        n = min(value, SUB_STEPS)
+        return [round(i * SUB_STEPS / n) for i in range(n)]
+    if mod_type == MOD_OFF:
+        return [min(round(SUB_STEPS / value), SUB_STEPS - 1)]
+    if mod_type == MOD_RAT:
+        return RAT_FAST if value == 1 else RAT_SLOW
+    return [0]   # plain, chords, Rnd, Jmp — fire once at the start
+
+def play_song(song):
+    global song_step
+    global chain_step
+    global phrase_step
+    global song_data
+    global current_notes_buffer
+    global sub_step
+    global next_tick
+
+    # UNCOMMENT THIS IF YOU WANT EXPERIMENTAL MIDI CLOCK OUT
+    # outport.send(mido.Message('clock'))
+
+    # at the start of a step: read the grid into the buffers and send CC once
+    if(sub_step == 0):
+        for song_channel in range(MAX_CHANNELS):
+
+            if song_step < MAX_SONG_STEPS:
+                active_chain_no = song_data[song][song_channel][song_step]
+                if active_chain_no !=  None:
+                    play_chain(active_chain_no,song_channel)
+                else:
+                    pass
+        for channel in range(MAX_CHANNELS):
+            send_cc(channel)
+
+    # every sub_step: fire any note scheduled by its modifier at this sub_step
+    for channel in range(MAX_CHANNELS):
+        if current_notes_buffer[channel] == None:
+            continue
+        mod_type, mod_val = current_modifier_buffer[channel]
+        if sub_step in trigger_substeps(mod_type, mod_val):
+            if sub_step != 0:
+                stop_note(channel)   # re-attack: stop the previous hit first
+            fire_channel(channel)
+
+    now = time.time()
+    if next_tick == 0.0:
+        next_tick = now
+    sleep_time = next_tick - now
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+    next_tick += (60 / bpm / 4 / SUB_STEPS)
+
+    sub_step += 1
+
+    if(sub_step >= SUB_STEPS):
+        stop_notes()
+        phrase_step += 1
+        current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
+        sub_step = 0
+
+    if phrase_step >= MAX_PHRASE_STEPS:
+        phrase_step = 0
+        chain_step += 1
+
+    if chain_step >= MAX_CHAIN_STEPS:
+        chain_step = 0
+        song_step +=1
+        send_midi(mido.Message('start'))
+    
+    if song_step >= loop_length:
+        song_step = 0
+
+
+def play_chain(chain_no,channel):
+    global chain_step 
+    phrase = chain_data[chain_no][0][chain_step]
+    transpose = chain_data[chain_no][1][chain_step]
+    if transpose == None: transpose = 0
+
+    if phrase !=  None:
+        play_phrase(phrase,transpose, channel)
+    else:
+        pass
+
+def play_phrase(phrase_no,transpose, channel):
+    global phrase_step
+    if phrase_step < MAX_PHRASE_STEPS:
+        note = phrase_data[phrase_no][0][phrase_step]
+        if note != None:
+            note += transpose
+            note = note%128
+        modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
+        cc = phrase_data[phrase_no][5][phrase_step],phrase_data[phrase_no][6][phrase_step]
+        save_note(note, modifier, cc, channel)
+
+def save_note(note, modifier, cc, channel):
+    
+    current_notes_buffer[channel] = note
+    current_modifier_buffer[channel] = modifier
+    current_cc_buffer[channel] = cc
+
+
+    last_notes_buffer[channel] = note
+
+def send_cc(channel):
+    cc = current_cc_buffer[channel]
+    if cc[0] != None and cc[1] != None:
+        send_midi(Message('control_change', channel=channel, control=cc[0], value=cc[1]))
+
+def fire_channel(channel):
+    # sends note_on for one channel, applying any pitch modifier (chord / Rnd / Jmp)
+    note = current_notes_buffer[channel]
+    mod = current_modifier_buffer[channel][0]
+    val = current_modifier_buffer[channel][1]
+
+    if mod in CHORD_INTERVALS:
+        for i in [0] + CHORD_INTERVALS[mod]:
+            send_midi(Message('note_on', channel=channel, note=(note+i)%128, velocity=channel_velocity[channel]*120))
+
+    elif mod == MOD_RND:
+        if val != None:
+            note = (note + random.randint(0, val)) % 128
+            current_notes_buffer[channel] = note   # keep buffer in sync so the right note stops
+        send_midi(Message('note_on', channel=channel, note=note, velocity=channel_velocity[channel]*120))
+
+    elif mod == MOD_JMP:
+        if val == None or random.randint(0, val) == 0:
+            send_midi(Message('note_on', channel=channel, note=note, velocity=channel_velocity[channel]*120))
+
+    else:   # plain note, and the timing modifiers Off / Rat / Rtg / Stc
+        send_midi(Message('note_on', channel=channel, note=note, velocity=channel_velocity[channel]*120))
+
+def stop_note(channel):
+    note = current_notes_buffer[channel]
+    if note == None:
+        return
+    mod = current_modifier_buffer[channel][0]
+    if mod in CHORD_INTERVALS:
+        for i in [0] + CHORD_INTERVALS[mod]:
+            send_midi(Message('note_off', channel=channel, note=(note+i)%128, velocity=120))
+    else:
+        send_midi(Message('note_off', channel=channel, note=note, velocity=120))
+
+def stop_notes():
+    for channel in range(MAX_CHANNELS):
+        stop_note(channel)
+
+def play_rest():
+    pass
+    
+def panic():
+    for channel in range(MAX_CHANNELS):
+        for note in range(MAX_MIDI):
+            send_midi(Message('note_off', channel=channel, note=note, velocity=120))
+
+################################
+#           DRAWING            #
+################################
 
 def draw_data(data_win,data,max_column,max_row,render_style=['int' for _ in range(MAX_CHANNELS)],is_song=False):
     
@@ -531,145 +731,7 @@ def draw_help(help_text):
     if help_scroll > len(help_text):
         help_scroll = 0
 
-def play_song(song):
-    global song_step
-    global chain_step
-    global phrase_step
-    global song_data
-    global current_notes_buffer
-    global sub_step
-    global next_tick
-
-    # UNCOMMENT THIS IF YOU WANT EXPERIMENTAL MIDI CLOCK OUT
-    # outport.send(mido.Message('clock'))
-
-    if(sub_step == 0):
-        for song_channel in range(MAX_CHANNELS):
-            
-            if song_step < MAX_SONG_STEPS:
-                active_chain_no = song_data[song][song_channel][song_step]
-                if active_chain_no !=  None:
-                    play_chain(active_chain_no,song_channel)
-                else:
-                    pass
-        play_notes(current_notes_buffer,current_modifier_buffer,current_cc_buffer)
-
-    now = time.time()
-    if next_tick == 0.0:
-        next_tick = now
-    sleep_time = next_tick - now
-    if sleep_time > 0:
-        time.sleep(sleep_time)
-    next_tick += (60 / bpm / 4 / SUB_STEPS)
-
-    sub_step += 1
-
-    if(sub_step >= SUB_STEPS):
-        stop_notes(current_notes_buffer)
-        phrase_step += 1
-        current_notes_buffer = [None for _ in range(MAX_CHANNELS)]
-        sub_step = 0
-
-    if phrase_step >= MAX_PHRASE_STEPS:
-        phrase_step = 0
-        chain_step += 1
-
-    if chain_step >= MAX_CHAIN_STEPS:
-        chain_step = 0
-        song_step +=1
-        outport.send(mido.Message('start'))
-    
-    if song_step >= loop_length:
-        song_step = 0
-
-
-def play_chain(chain_no,channel):
-    global chain_step 
-    phrase = chain_data[chain_no][0][chain_step]
-    transpose = chain_data[chain_no][1][chain_step]
-    if transpose == None: transpose = 0
-
-    if phrase !=  None:
-        play_phrase(phrase,transpose, channel)
-    else:
-        pass
-
-def play_phrase(phrase_no,transpose, channel):
-    global phrase_step
-    if phrase_step < MAX_PHRASE_STEPS:
-        note = phrase_data[phrase_no][0][phrase_step]
-        if note != None:
-            note += transpose
-            note = note%128
-        modifier = phrase_data[phrase_no][1][phrase_step],phrase_data[phrase_no][2][phrase_step]
-        cc = phrase_data[phrase_no][5][phrase_step],phrase_data[phrase_no][6][phrase_step]
-        save_note(note, modifier, cc, channel)
-
-def save_note(note, modifier, cc, channel):
-    
-    current_notes_buffer[channel] = note
-    current_modifier_buffer[channel] = modifier
-    current_cc_buffer[channel] = cc
-
-
-    last_notes_buffer[channel] = note
-
-def play_notes(notes, modifiers, cc):
-    for channel in range(MAX_CHANNELS):
-        if cc[channel][0] != None and cc[channel][1] != None:
-            outport.send(Message('control_change', channel=channel, control=cc[channel][0], value=cc[channel][1]))
-
-        if notes[channel] != None:
-            mod = modifiers[channel][0]
-            if mod in CHORD_INTERVALS:
-                for i in [0] + CHORD_INTERVALS[mod]:
-                    outport.send(Message('note_on', channel=channel, note=(notes[channel]+i)%128, velocity=channel_velocity[channel]*120))
-            elif mod == None:
-                outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
-
-            
-            elif  modifiers[channel][0] == 3: # RND
-                if modifiers[channel][1] == None:
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
-                else:
-                    modifier_value =  modifiers[channel][1]
-                    if modifier_value == None:
-                        modifier_value = 0
-                    modifier_value =  random.randint(0,modifier_value)
-                    notes[channel] = (notes[channel]+modifier_value)%128
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
-            
-            elif  modifiers[channel][0] == 2: # JMP
-                if modifiers[channel][1] == None:
-                    outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
-                else:
-                    jump = random.randint(0, modifiers[channel][1]) #compare to 0?
-                    if jump == 0:
-                        outport.send(Message('note_on', channel=channel, note=notes[channel], velocity=channel_velocity[channel]*120))
-                    else:
-                        pass
-
-            
-def stop_notes(notes):
-    for channel in range(MAX_CHANNELS):
-        if notes[channel] != None:
-            mod = current_modifier_buffer[channel][0]
-            if mod in CHORD_INTERVALS:
-                for i in [0] + CHORD_INTERVALS[mod]:
-                    outport.send(Message('note_off', channel=channel, note=(notes[channel]+i)%128, velocity=120))
-            else:
-                outport.send(Message('note_off', channel=channel, note=notes[channel], velocity=120))
-
-def play_rest():
-    pass
-    
-def panic():
-    for channel in range(MAX_CHANNELS):
-        for note in range(MAX_MIDI):
-            outport.send(Message('note_off', channel=channel, note=note, velocity=120))
-
 def draw_row_no(win,rows,step,is_song=False):
-    
     for current_row in range(rows):
         if current_row == step:
             win.addstr(current_row, 0, f"{current_row:02}", shift_mod_color)
@@ -695,7 +757,7 @@ def draw_intro(scr):
     for i in range(ANIMATION_START):
         pad.refresh(0,0,0,ANIMATION_START-1-i,HEIGHT-1,WIDTH-1)
         # draw version no on top left
-        scr.addstr(0,0,f"v0.6")
+        scr.addstr(0,0,f"v0.7")
         # draw terminal size on bottom right
         scr.addstr(HEIGHT-1,WIDTH-2-len(str(WIDTH)+str(HEIGHT)),f"{HEIGHT}×{WIDTH}")
         scr.refresh()
@@ -703,8 +765,8 @@ def draw_intro(scr):
     time.sleep(1.033)
     scr.clear()
 
-def draw_info(win,midiport):
-        
+def draw_info(win,midiport,midiport2=None):
+
         win.border()
         # i will be the vertical and j the horizontal position
         i,j = 1,1
@@ -723,7 +785,12 @@ def draw_info(win,midiport):
 
         i+=1 # i counts up for each line
         win.addstr(i,j, f"{midiport[0:11]} … {midiport[-1:]}")   # BPM and Midi port
-        i+=3
+        i+=1
+        if midiport2:
+            win.addstr(i,j, f"{midiport2[0:11]} … {midiport2[-1:]}")
+        else:
+            win.addstr(i,j, "               ")
+        i+=2
         
         win.attron(shift_mod_color | curses.A_STANDOUT)
 
@@ -977,7 +1044,9 @@ def draw_help_file(win):
         is_dirty = False
         win.refresh()
 
-# Main Program 
+################################
+#         MAIN PROGRAM         #
+################################
 
 def main(stdscr):
 
@@ -990,8 +1059,11 @@ def main(stdscr):
     global bpm
     global loop_length
     global MIDI_PORT
+    global MIDI_PORT2
     global outport
+    global outport2
     outport = None
+    outport2 = None
 
     # CURSES SETUP
     setup_colors()
@@ -1037,14 +1109,27 @@ def main(stdscr):
                     MIDI_PORT = 0
                     config_data[0][0][0] = 0
                 outport = mido.open_output(available_ports[MIDI_PORT])
-            
+
             except:
                 outport = None
-            
+
+            stdscr.clear()
+
+        # Optional secondary Midiport (disabled when equal to primary)
+        if MIDI_PORT2 != config_data[0][0][5]:
+            MIDI_PORT2 = config_data[0][0][5]
+            if outport2:
+                outport2.close()
+            outport2 = None
+            if MIDI_PORT2 != config_data[0][0][0]:
+                try:
+                    available_ports = mido.get_output_names()
+                    if MIDI_PORT2 < len(available_ports):
+                        outport2 = mido.open_output(available_ports[MIDI_PORT2])
+                except:
+                    outport2 = None
             stdscr.clear()
                           
-
-
         # different screens are selected and only the current screen is drawn
         if current_screen == 0:
             # SONG VIEW
@@ -1109,6 +1194,7 @@ def main(stdscr):
             stdscr.addstr(TABLE_HEADER_Y+3,TABLE_HEADER_X+6,"Loop Length")
             stdscr.addstr(TABLE_HEADER_Y+4,TABLE_HEADER_X+6,"Disable Autosaving")
             stdscr.addstr(TABLE_HEADER_Y+5,TABLE_HEADER_X+6,"Enable Channle Mutes") # currently maximum name length
+            stdscr.addstr(TABLE_HEADER_Y+6,TABLE_HEADER_X+6,"Secondary Midi Out  ")
 
             stdscr.refresh()
 
@@ -1128,7 +1214,9 @@ def main(stdscr):
             pass
 
         # draw Playback info of song, chain and phrase step
-        if not current_screen == 4: draw_info(info_win,available_ports[MIDI_PORT])        
+        if not current_screen == 4:
+            midiport2_name = available_ports[MIDI_PORT2] if outport2 and MIDI_PORT2 < len(available_ports) else None
+            draw_info(info_win, available_ports[MIDI_PORT], midiport2_name)
 
         # DEBUG FRAME TIME
         # stdscr.addstr(0,0,f"{(time_now-time_last)*10000}")

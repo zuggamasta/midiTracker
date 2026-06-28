@@ -1,5 +1,5 @@
 ```
-v0.6                                    oo          dP    oo 
+v0.7                                    oo          dP    oo 
                                                     88       
                           88d8b.d8b.    dP    .d888b88    dP 
                           88'`88'`88    88    88'  `88    88 
@@ -16,7 +16,6 @@ d8888P 88d888b. .d8888b. .d8888b. 88  .dP  .d8888b. 88d888b.
 ![GitHub Release](https://img.shields.io/github/v/release/zuggamasta/midiTracker?include_prereleases&style=flat-square&logo=python&logoColor=white) ![GitHub last commit](https://img.shields.io/github/last-commit/zuggamasta/midiTracker?style=flat-square) ![GitHub Repo stars](https://img.shields.io/github/stars/zuggamasta/midiTracker?style=flat-square)
 
 MidiTracker is a small tracker that sequences notes in a nested vertical layout. The UI is heavily inspired by LSDJ and other trackers from the past, present and future. To make it portable and useful on all kinds of plattforms I've choosen python for it with minimalist curses / ASCII user interface.
-
 
 ## Running midiTracker
 
@@ -139,9 +138,28 @@ This is the keymap which midiTracker has preconfigured, you can change the assin
 
 ```Shift + q``` : Quit
 
+## Note Modifiers
 
-## More Screenshots
+On the phrase screen, modifiers can be applied to any of the 16 steps. Modifiers will only fire if a note is assigned to the same step. These modifiers can add probabilities, note repeats, and a range of chords. Some modifiers can also be assigned a value.
 
+|    | short | Name          | Description |
+| ---| ----- | ------------- | ----------- |
+|  1 | `Off` | Offset        | Offsets the note trigger. Value 2 = 1/2, 3 = 1/3 later than the original trigger. |
+|  2 | `Rat` | Ratchet       | Ratcheting, 1 Fast to slow, 2 slow to fast |
+|  3 | `Jmp` | Jump          | Adds probability that a step will be triggered. Lower values happen more often. |
+|  4 | `Rnd` | Random        | Randomizes note on the step. Value corresponds to maximum random semitone. |
+|  5 | `none`| None          | Intentionally left blank. |
+|  6 | `Rtg` | Retrigger     | Retrigger value times. |
+|  7 | `MAJ` | Major         | Sends 3-note major chord. |
+|  8 | `MIN` | Minor         | Sends 3-note minor chord. |
+|  9 | `DIM` | Diminished  | Sends 3-note diminished chord. |
+| 11 | `MA7` | Major Seventh | Sends 4-note major seventh chord. |
+| 12 | `MI7` | Minor Seventh | Sends 4-note minor seventh Chord. |
+
+## Multiple Midi Outputs
+To make it easy and simple to sync Miditracker with multiple clients, you can specify a secondary MIDI output. This makes it simple to talk to multiple MIDI USB devices or send a copy of the data to your VJ setup.
+
+## Screenshots
 ![A screenshot of miditracker in action, showing the phrase editor](/Documentation/screen_2.png)
 
 ![Chain editor](/Documentation/screen_3.png)
@@ -158,4 +176,3 @@ Thank you to everyone helping and making all of this possible. Thank you Mirjam,
 
 ## ⚠️ ⚠️ ⚠️ Use at your own risk ⚠️ ⚠️ ⚠️
 I am developing this tool for myself, but I'll try to make it accessible to other artists and everyone curious along the way.
-
